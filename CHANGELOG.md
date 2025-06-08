@@ -1,3 +1,10 @@
+# [1.21.0](https://github.com/YU000jp/logseq-plugin-two-hop-link/compare/v1.20.2...v1.21.0) (2025-06-08)
+
+
+### Features
+
+* Not Support Logseq DB model [#21](https://github.com/YU000jp/logseq-plugin-two-hop-link/issues/21) ([cdad697](https://github.com/YU000jp/logseq-plugin-two-hop-link/commit/cdad69701e3d01d91fa40d8871b682114997fa41))
+
 ## [1.20.2](https://github.com/YU000jp/logseq-plugin-two-hop-link/compare/v1.20.1...v1.20.2) (2023-11-06)
 
 
