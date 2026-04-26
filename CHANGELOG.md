@@ -1,3 +1,10 @@
+## [1.21.1](https://github.com/YU000jp/logseq-plugin-two-hop-link/compare/v1.21.0...v1.21.1) (2026-04-26)
+
+
+### Bug Fixes
+
+* exclude current page from blocks results ([2d26b4a](https://github.com/YU000jp/logseq-plugin-two-hop-link/commit/2d26b4aaf8f3302d879ce5e0ddab5aa28d91c830))
+
 # [1.21.0](https://github.com/YU000jp/logseq-plugin-two-hop-link/compare/v1.20.2...v1.21.0) (2025-06-08)
 
 
