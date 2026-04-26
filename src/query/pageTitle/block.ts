@@ -41,6 +41,12 @@ export const typeBlock = async (
     const outgoingList = result.filter((block) => block.content !== "")
     if (outgoingList.length === 0) return
 
+    if (logseq.settings!.excludeCurrentPage === true)
+        for (const block of [...outgoingList])
+            if (block.page?.originalName === currentPage.originalName)
+                outgoingList.splice(outgoingList.indexOf(block), 1)
+    if (outgoingList.length === 0) return
+
     //ページを除外する
     excludePageFromBlockEntity(outgoingList)
     if (outgoingList.length === 0) return
@@ -60,7 +66,7 @@ export const typeBlock = async (
     removeBlockUuid(outgoingList)
 
 
-    for (const block of result) {
+    for (const block of outgoingList) {
         const content = await replaceForLogseq(block.content, flag) as string // 嘉造がある場合のみ
         if (flag
             && flag.isImageOnly === true
