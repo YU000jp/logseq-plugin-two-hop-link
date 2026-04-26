@@ -38,13 +38,11 @@ export const typeBlock = async (
     if (!result || result.length === 0) return
 
     //blocksをフィルターする
-    const outgoingList = result.filter((block) => block.content !== "")
+    let outgoingList = result.filter((block) => block.content !== "")
     if (outgoingList.length === 0) return
 
     if (logseq.settings!.excludeCurrentPage === true)
-        for (const block of [...outgoingList])
-            if (block.page?.originalName === currentPage.originalName)
-                outgoingList.splice(outgoingList.indexOf(block), 1)
+        outgoingList = outgoingList.filter((block) => block.page?.originalName !== currentPage.originalName)
     if (outgoingList.length === 0) return
 
     //ページを除外する
