@@ -110,4 +110,11 @@ export const settings = (): SettingSchemaDesc[] => [
         default: true,
         description: t("Enabled by default."),
     },
+    {//Load moreで一度に表示する件数
+        key: "loadMoreChunkSize",
+        type: "number",
+        title: t("Items shown at a time in Load more"),
+        default: 20,
+        description: t("A larger value shows more items at once. A smaller value improves responsiveness."),
+    },
 ]

@@ -28,6 +28,8 @@
     "Include page hierarchy in outgoing links": "発信リンクにページの階層(hierarchy, namespaces)を含める",
     "Last updated: ": "最終更新: ",
     "Load more": "さらに読み込む",
+    "Items shown at a time in Load more": "Load moreで一度に表示する件数",
+    "A larger value shows more items at once. A smaller value improves responsiveness.": "大きい値ほど一度に多く表示します。小さい値ほど応答性が向上します。",
     "No links were found on this page yet. Add links, then click Update.": "このページではまだリンクが見つかりませんでした。リンクを追加したあと、［更新］をクリックしてください。",
     "Open 2 Hop Link settings": "2ホップリンクの設定を開く",
     "Open in the browser": "ブラウザで開く",
