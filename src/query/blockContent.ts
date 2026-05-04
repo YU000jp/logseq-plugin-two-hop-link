@@ -12,6 +12,9 @@ import {
     replaceMatchedImages,
 } from "./blockImageTransforms"
 
+const blockContentCache = new Map<string, Promise<string>>()
+const replaceForLogseqCache = new Map<string, Promise<string>>()
+
 
 /**
  * Returns the content of a block after excluding properties and rendering.
@@ -19,19 +22,27 @@ import {
  * @returns The processed content of the block.
  */
 export const blockContent = async (content: string): Promise<string> => {
+    const cached = blockContentCache.get(content)
+    if (cached) return cached
 
-    //プロパティやレンダリングだけのものは除外する
-    if (isRenderableBlockContent(content) === false) return ""
+    const promise = (async () => {
 
-    // リファレンス対応
-    const isReference: string | null = await includeReference(content) as string | null
-    if (isReference !== null) content = isReference
+        //プロパティやレンダリングだけのものは除外する
+        if (isRenderableBlockContent(content) === false) return ""
 
-    // プロパティを削除する
-    content = stripBlockProperties(content + "\n").replace(/\n$/, "") // 処理のタイミングに注意 (リファレンスの中にも含まれている場合があるのでここで実行)
+        // リファレンス対応
+        const isReference: string | null = await includeReference(content) as string | null
+        if (isReference !== null) content = isReference
 
-    // 内容を置換する
-    return await replaceForLogseq(content) as string
+        // プロパティを削除する
+        content = stripBlockProperties(content + "\n").replace(/\n$/, "") // 処理のタイミングに注意 (リファレンスの中にも含まれている場合があるのでここで実行)
+
+        // 内容を置換する
+        return await replaceForLogseq(content) as string
+    })()
+
+    blockContentCache.set(content, promise)
+    return promise
 }
 
 
@@ -40,19 +51,28 @@ export const replaceForLogseq = async (
     content: string,
     flag?: { isImageOnly: boolean }
 ): Promise<string> => {
+    const cacheKey = `${flag?.isImageOnly ? "image-only:" : "all:"}${content}`
+    const cached = replaceForLogseqCache.get(cacheKey)
+    if (cached) return cached
 
-    // assetsにある画像を表示する
-    const rep = await replaceImage(content) as { content: string, match: number } // 処理のタイミングに注意
-    if (flag && flag.isImageOnly
-        && rep.match === 0) return ""
+    const promise = (async () => {
 
-    content = rep.content
+        // assetsにある画像を表示する
+        const rep = await replaceImage(content) as { content: string, match: number } // 処理のタイミングに注意
+        if (flag && flag.isImageOnly
+            && rep.match === 0) return ""
 
-    // 専用マークダウンを置換する
-    content = applyLightMarkdownTransforms(content)
+        content = rep.content
 
-    // 返却する
-    return content
+        // 専用マークダウンを置換する
+        content = applyLightMarkdownTransforms(content)
+
+        // 返却する
+        return content
+    })()
+
+    replaceForLogseqCache.set(cacheKey, promise)
+    return promise
 }
 
 

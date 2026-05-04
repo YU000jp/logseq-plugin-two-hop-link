@@ -4,6 +4,7 @@ import { excludePageFromBlockEntity } from "../../excludePages"
 import { CreateTdBlock, pageArray, tokenLinkCreateTh } from "../type"
 import { normalizeBlockEntities } from "../helpers"
 import { replaceForLogseq } from "../blockContent"
+import { renderBatchSection } from "../batch"
 
 export const typeBlock = async (
     hopLinksElement: HTMLDivElement,
@@ -60,21 +61,26 @@ export const typeBlock = async (
         currentPage,
         "th-type-blocks",
         t("Blocks"),
-        { mark: "<<"}
+        { mark: "<<" }
     )
     //end of 行タイトル(左ヘッダー)
 
-    for (const block of outgoingList) {
-        const content = await replaceForLogseq(block.content, flag) as string // 嘉造がある場合のみ
-        if (flag
-            && flag.isImageOnly === true
-            && content === "") continue //画像のみにする場合
-        
-        await CreateTdBlock(currentPage, {
-            uuid: block.uuid,
-            content
-        }, tokenLinkElement)
-    }
+    await renderBatchSection({
+        rows: outgoingList,
+        hopLinksElement,
+        createSection: () => tokenLinkElement,
+        renderRow: async (block, sectionElement) => {
+            const content = await replaceForLogseq(block.content, flag) as string
+            if (flag
+                && flag.isImageOnly === true
+                && content === "") return false
+
+            await CreateTdBlock(currentPage, {
+                uuid: block.uuid,
+                content
+            }, sectionElement)
+            return true
+        },
+    })
     //結果を表示する
-    hopLinksElement.append(tokenLinkElement)
 }
