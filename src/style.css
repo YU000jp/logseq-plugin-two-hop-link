@@ -42,7 +42,7 @@ body[data-page=page]>div {
                     background-color: var(--ls-secondary-background-color);
                 }
 
-                & div.hopLInksTd {
+                & div.hopLinksTd {
                     overflow: hidden;
                     text-overflow: ellipsis;
 

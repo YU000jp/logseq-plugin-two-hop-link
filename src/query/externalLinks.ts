@@ -14,10 +14,14 @@ export const externalLinks = (PageBlocksInnerElement: HTMLDivElement, hopLinksEl
 
     for (const externalLink of externalLinks) {
         const { labelElement, inputElement, popupElement } = createTooltipRowShell()
+        const divElementTag: HTMLDivElement = document.createElement("div")
+        divElementTag.classList.add("hopLinksTd")
 
         const anchorElement: HTMLAnchorElement = externalLink.cloneNode(true) as HTMLAnchorElement
+        divElementTag.append(anchorElement)
         inputElement.addEventListener("change", openTooltipEventFromPageName(popupElement))
-        labelElement.append(anchorElement, inputElement, popupElement)
+
+        labelElement.append(divElementTag, inputElement, popupElement)
         externalLinksElement.append(labelElement)
     }
 
