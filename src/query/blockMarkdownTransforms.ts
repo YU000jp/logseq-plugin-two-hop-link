@@ -1,3 +1,5 @@
+import { replaceInlineMarkup } from "./blockInlineTransforms"
+
 export const applyLightMarkdownTransforms = (content: string): string =>
              replaceInlineMarkup(
                           replaceTaskMarkers(
@@ -11,14 +13,6 @@ export const replaceLogbookSection = (content: string) =>
              content.includes(":LOGBOOK:")
                           ? content.replace(/:LOGBOOK:([\s\S]*?)END:/g, "")
                           : content
-
-export const replaceInlineMarkup = (content: string) =>
-             content.replaceAll(/\[([^\[\]]*?)\]\(([^\[\]]*?)\)/g, "<b>$1</b>")
-                          .replaceAll(/\[\[([^\[\]]*?)\]\]/g, "<i>$1</i>")
-                          .replaceAll("\n", "<br/>")
-                          .replaceAll(/``([\s\S]*?)``/g, "<code>$1</code>")
-                          .replaceAll(/completed::/g, "<br/>completed::")
-                          .replaceAll(/SCHEDULED: /g, "<br/>SCHEDULED: ")
 
 export const replaceTaskMarkers = (content: string) =>
              content.replaceAll(/^(#*)\s?DONE/gm, "$1✔️")
