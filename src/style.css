@@ -19,6 +19,19 @@ body[data-page=page]>div {
             font-size: .88em;
         }
 
+        & button.hopLinksLoadMore {
+            margin: 1em 0 0;
+            font-size: .88em;
+            display: inline-block;
+        }
+
+        & .hopLinksLoadMoreContainer {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            padding: 0.5em 0 0;
+        }
+
         & div {
 
             &#outgoingLinks,
