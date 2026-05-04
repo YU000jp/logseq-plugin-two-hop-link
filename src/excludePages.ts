@@ -6,7 +6,7 @@ import { BlockEntity, IEntityID, PageEntity } from "@logseq/libs/dist/LSPlugin"
  * @param pageList - The list of page names to filter.
  */
 export const excludePagesFromPageList = (pageList: string[]) => {
-    const excludePages = logseq.settings!.excludePages.split("\n") as string[] | undefined //除外するページ
+    const excludePages = (logseq.settings!.excludePages as string).split("\n") as string[] | undefined //除外するページ
     if (excludePages && excludePages.length !== 0)
         for (const pageName of pageList)
             if (excludePages.includes(pageName))
@@ -19,7 +19,7 @@ export const excludePagesFromPageList = (pageList: string[]) => {
  * @param PageEntityArray An array of PageEntity objects to be filtered.
  */
 export const excludePageFromPageEntity = (PageEntityArray: PageEntity[]) => {
-    const excludePages = logseq.settings!.excludePages.split("\n") as string[] | undefined //除外するページ
+    const excludePages = (logseq.settings!.excludePages as string).split("\n") as string[] | undefined //除外するページ
     if (excludePages && excludePages.length !== 0) {
         for (const page of PageEntityArray) {
             if (excludePages.includes(page.originalName))
@@ -44,7 +44,7 @@ export const excludePageFromPageEntity = (PageEntityArray: PageEntity[]) => {
  * @param outgoingList - The list of BlockEntities to filter.
  */
 export const excludePageFromBlockEntity = async (outgoingList: { uuid: string, content: string, page: IEntityID }[]) => {
-    const excludePages = logseq.settings!.excludePages.split("\n") as string[] | undefined //除外するページ
+    const excludePages = (logseq.settings!.excludePages as string).split("\n") as string[] | undefined //除外するページ
     if (excludePages && excludePages.length !== 0)
         for (const block of outgoingList) {
             if (!block.page || !block.page.originalName) continue
@@ -59,7 +59,7 @@ export const excludePageFromBlockEntity = async (outgoingList: { uuid: string, c
  * @param outgoingList - An array of objects containing uuid and name properties.
  */
 export const excludePages = (outgoingList: ({ uuid: string; name: string })[]) => {
-    const excludePages = logseq.settings!.excludePages.split("\n") as string[] | undefined //除外するページ
+    const excludePages = (logseq.settings!.excludePages as string).split("\n") as string[] | undefined //除外するページ
     if (excludePages && excludePages.length !== 0)
         for (const excludePage of excludePages)
             for (const pageLink of outgoingList)

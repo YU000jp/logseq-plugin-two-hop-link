@@ -128,7 +128,7 @@ const hopLinks = async (select?: string) => {
 
         // 2ホップリンクの表示 selectで選択されたタイプ
         switchSelect(
-            select || logseq.settings!.hopLinkType,
+            select || (logseq.settings!.hopLinkType as string),
             hopLinksElement,
             outgoingList,
             current)
