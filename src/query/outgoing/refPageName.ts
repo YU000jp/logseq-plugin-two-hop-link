@@ -1,10 +1,12 @@
 import { BlockEntity, PageEntity } from "@logseq/libs/dist/LSPlugin"
 import { checkAlias, excludePagesFromPageList } from "../../excludePages"
 import { createTd, pageArray, tokenLinkCreateTh } from "../type"
-import { renderOutgoingPageLinkSections } from "./shared"
+import { createPageLookupCache, renderOutgoingPageLinkSections } from "./shared"
 
 //typeBlocks
 export const typeRefPageName = async (outgoingList: pageArray[], hopLinksElement: HTMLDivElement, current: PageEntity | null) => {
+    const getPageByName = createPageLookupCache()
+
     await renderOutgoingPageLinkSections({
         outgoingList,
         hopLinksElement,
@@ -29,7 +31,7 @@ export const typeRefPageName = async (outgoingList: pageArray[], hopLinksElement
         createSection: (pageLink) => tokenLinkCreateTh(pageLink, "th-type-backLinks", "BackLinks", { mark: "<<" }),
         renderRow: async (pageName, tokenLinkElement) => {
             if (pageName === "") return false
-            const page = await logseq.Editor.getPage(pageName) as PageEntity | null
+            const page = await getPageByName(pageName) as PageEntity | null
             if (!page) return false
 
             createTd(page, tokenLinkElement)

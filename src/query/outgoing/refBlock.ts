@@ -29,7 +29,11 @@ export const typeRefBlock = async (
             const page = await logseq.Editor.getPageLinkedReferences(pageLink.uuid) as [page: PageEntity, blocks: { uuid: string, content: string, page: IEntityID, }[]][]
             if (!page) return []
 
-            const outgoingBlocks = page.filter((page) => page[1].length !== 0).map((page) => page[1][0])
+            const outgoingBlocks: { uuid: string, content: string, page: IEntityID }[] = []
+            for (const reference of page) {
+                const firstBlock = reference[1][0]
+                if (firstBlock) outgoingBlocks.push(firstBlock)
+            }
             if (outgoingBlocks.length === 0) return []
 
             excludePageFromBlockEntity(outgoingBlocks)
