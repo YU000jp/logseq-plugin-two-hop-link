@@ -1,3 +1,10 @@
+## [1.21.2](https://github.com/YU000jp/logseq-plugin-two-hop-link/compare/v1.21.1...v1.21.2) (2026-05-04)
+
+
+### Bug Fixes
+
+* Always exclude current page from outgoing list [#24](https://github.com/YU000jp/logseq-plugin-two-hop-link/issues/24) ([26feb6d](https://github.com/YU000jp/logseq-plugin-two-hop-link/commit/26feb6dbfe3ebc7f65bccc008a8945262ececc63))
+
 ## [1.21.1](https://github.com/YU000jp/logseq-plugin-two-hop-link/compare/v1.21.0...v1.21.1) (2026-04-26)
 
 
