@@ -3,23 +3,17 @@ import { createTd, pageArray, tokenLinkCreateTh } from "../type"
 import { preparePageEntities } from "../helpers"
 import { t } from "logseq-l10n"
 import { renderOutgoingPageLinkSections } from "./shared"
+import { createPageLookupCache } from "./shared"
 
 export const typePageTags = async (outgoingList: pageArray[], hopLinksElement: HTMLDivElement) => {
+    const getPageByName = createPageLookupCache()
+
     await renderOutgoingPageLinkSections({
         outgoingList,
         hopLinksElement,
         collectRows: async (pageLink) => {
             const page = await logseq.Editor.getPage(pageLink.uuid) as PageEntity | null
             if (!page) return []
-
-            const pageTagLookupCache = new Map<string, Promise<PageEntity | null>>()
-            const getPageByName = (name: string) => {
-                const cached = pageTagLookupCache.get(name)
-                if (cached) return cached
-                const request = logseq.Editor.getPage(name) as Promise<PageEntity | null>
-                pageTagLookupCache.set(name, request)
-                return request
-            }
 
             const pageEntityFromProperty: PageEntity[] = []
             const pageTagsFromProperty = page.properties?.tags as string[] | undefined

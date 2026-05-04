@@ -14,6 +14,20 @@ export type OutgoingPageLinkSectionOptions<T> = {
              renderRow: (row: T, sectionElement: HTMLDivElement, pageLink: pageArray) => Promise<boolean | void> | boolean | void
 }
 
+export const createPageLookupCache = () => {
+             const pageLookupCache = new Map<string, Promise<PageEntity | null>>()
+
+             return (name: string) => {
+                          const cacheKey = name.trim()
+                          const cached = pageLookupCache.get(cacheKey)
+                          if (cached) return cached
+
+                          const request = logseq.Editor.getPage(cacheKey) as Promise<PageEntity | null>
+                          pageLookupCache.set(cacheKey, request)
+                          return request
+             }
+}
+
 /**
  * Shared batch flow for outgoing page-link based sections.
  * It handles the outer page-link iteration and delegates section row rendering to `renderBatchSection`.
@@ -30,18 +44,35 @@ export const renderOutgoingPageLinkSections = async <T>({
 }: OutgoingPageLinkSectionOptions<T>): Promise<void> => {
              if (current && prepareOutgoingList) prepareOutgoingList(outgoingList)
 
-             for (const pageLink of outgoingList) {
-                          if (!pageLink) continue
-                          if (shouldSkipPageLink && shouldSkipPageLink(pageLink)) continue
+             const collectConcurrency = 3
+             const collectedSections: Array<{ pageLink: pageArray, rows: T[] }> = []
+             let nextIndex = 0
 
-                          const rows = await collectRows(pageLink)
-                          if (!rows || rows.length === 0) continue
+             const collectNext = async () => {
+                          while (true) {
+                                       const currentIndex = nextIndex++
+                                       if (currentIndex >= outgoingList.length) return
 
+                                       const pageLink = outgoingList[currentIndex]
+                                       if (!pageLink) continue
+                                       if (shouldSkipPageLink && shouldSkipPageLink(pageLink)) continue
+
+                                       const rows = await collectRows(pageLink)
+                                       if (!rows || rows.length === 0) continue
+
+                                       collectedSections[currentIndex] = { pageLink, rows }
+                          }
+             }
+
+             await Promise.all(Array.from({ length: Math.min(collectConcurrency, outgoingList.length) }, () => collectNext()))
+
+             for (const section of collectedSections) {
+                          if (!section) continue
                           await renderBatchSection({
-                                       rows,
+                                       rows: section.rows,
                                        hopLinksElement,
-                                       createSection: () => createSection(pageLink),
-                                       renderRow: (row, sectionElement) => renderRow(row, sectionElement, pageLink),
+                                       createSection: () => createSection(section.pageLink),
+                                       renderRow: (row, sectionElement) => renderRow(row, sectionElement, section.pageLink),
                           })
 
                           await yieldToUI()

@@ -12,7 +12,7 @@ import { outgoingLinks, outgoingLinksFromCurrentPage } from "./query/outgoingLin
 import { externalLinks } from "./query/externalLinks"
 import { pageArray } from "./query/type"
 import { typeBlock } from "./query/pageTitle/block"
-import { shouldExcludeOutgoingPage, toPageArray } from "./query/outgoing/shared"
+import { createPageLookupCache, shouldExcludeOutgoingPage, toPageArray } from "./query/outgoing/shared"
 
 
 export const loadTwoHopLink = async () => {
@@ -41,16 +41,7 @@ let processing: boolean = false
 const hopLinks = async (select?: string) => {
     if (processing) return
     processing = true
-    const pageLookupCache = new Map<string, Promise<PageEntity | null>>()
-    const lookupPage = (name: string) => {
-        const cacheKey = name.trim()
-        const cached = pageLookupCache.get(cacheKey)
-        if (cached) return cached
-
-        const request = logseq.Editor.getPage(cacheKey) as Promise<PageEntity | null>
-        pageLookupCache.set(cacheKey, request)
-        return request
-    }
+    const lookupPage = createPageLookupCache()
 
     try {
 
