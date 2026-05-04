@@ -1,6 +1,7 @@
 import { PageEntity } from "@logseq/libs/dist/LSPlugin"
 import { pageArray } from "../type"
 import { renderBatchSection } from "../batch"
+import { excludeJournal } from "../../excludePages"
 
 export type OutgoingPageLinkSectionOptions<T> = {
              outgoingList: pageArray[]
@@ -45,20 +46,9 @@ export const renderOutgoingPageLinkSections = async <T>({
              }
 }
 
-export const shouldExcludeOutgoingPage = (page: PageEntity): boolean => {
-             //日誌を除外する
-             if (logseq.settings!.excludeJournalFromOutgoingLinks === true && page["journal?"] === true)
-                          return true
+export const shouldExcludeOutgoingPage = (page: PageEntity): boolean =>
+             excludeJournal(page["journal?"], page.originalName)
 
-             if (logseq.settings!.excludeDateFromOutgoingLinks === true) {
-                          //2024/01のような形式のページを除外する
-                          if (page.originalName.match(/^\d{4}\/\d{2}$/) !== null) return true
-                          //2024のような数値を除外する
-                          if (page.originalName.match(/^\d{4}$/) !== null) return true
-             }
-
-             return false
-}
 
 export const toPageArray = (page: PageEntity): pageArray => ({
              uuid: page.uuid,
