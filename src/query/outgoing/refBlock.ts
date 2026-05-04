@@ -5,6 +5,7 @@ import { pageArray, tokenLinkCreateTh } from "../type"
 import { normalizeBlockEntities } from "../helpers"
 import { CreateTdBlock } from "../type"
 import { replaceForLogseq } from "../blockContent"
+import { renderBatchSection } from "../batch"
 
 //typeBlocks
 export const typeRefBlock = async (
@@ -39,22 +40,21 @@ export const typeRefBlock = async (
         if (normalizedOutgoingList.length === 0) continue
 
         // 各ブロックはその日付情報をもっていないので、ソートできない
-
-        //thの作成
-        const tokenLinkElement: HTMLDivElement = tokenLinkCreateTh(
-            pageLink,
-            "th-type-blocks",
-            t("Blocks"),
-            { mark: "<<" }
-        )
-        //end of 行タイトル(左ヘッダー)
-
-        for (const block of normalizedOutgoingList) {
-            const content = await replaceForLogseq(block.content, { isImageOnly: flag.isImageOnly }) as string
-            if (!content) continue
-            await CreateTdBlock(pageLink, block, tokenLinkElement)
-        }
-        //end of 右側
-        hopLinksElement.append(tokenLinkElement)
+        await renderBatchSection({
+            rows: normalizedOutgoingList,
+            hopLinksElement,
+            createSection: () => tokenLinkCreateTh(
+                pageLink,
+                "th-type-blocks",
+                t("Blocks"),
+                { mark: "<<" }
+            ),
+            renderRow: async (block, tokenLinkElement) => {
+                const content = await replaceForLogseq(block.content, { isImageOnly: flag.isImageOnly }) as string
+                if (!content) return false
+                await CreateTdBlock(pageLink, block, tokenLinkElement)
+                return true
+            },
+        })
     }
 }

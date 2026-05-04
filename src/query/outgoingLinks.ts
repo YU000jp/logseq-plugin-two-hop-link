@@ -2,24 +2,26 @@ import { t } from "logseq-l10n"
 import { PageEntity } from "@logseq/libs/dist/LSPlugin.user"
 import { createTd, pageArray } from "./type"
 import { createHopLinksSection } from "./helpers"
+import { renderBatchSection } from "./batch"
 
-export const outgoingLinks = (outgoingList: pageArray[], hopLinksElement: HTMLDivElement) => {
+export const outgoingLinks = async (outgoingList: pageArray[], hopLinksElement: HTMLDivElement) => {
+    await renderBatchSection({
+        rows: outgoingList,
+        hopLinksElement,
+        createSection: () => createHopLinksSection(
+            "outgoingLinks",
+            `>> ${t("Outgoing Links (Keyword)")}`
+        ),
+        renderRow: (pageLink, outgoingLinksElement) => {
+            createTd({
+                uuid: pageLink.uuid,
+                originalName: pageLink.name,
+                name: pageLink.name
+            }, outgoingLinksElement)
 
-    const outgoingLinksElement: HTMLDivElement = createHopLinksSection(
-        "outgoingLinks",
-        `>> ${t("Outgoing Links (Keyword)")}`
-    )
-
-    // tdを作成
-    for (const pageLink of outgoingList)
-        createTd({
-            uuid: pageLink.uuid,
-            originalName: pageLink.name,
-            name: pageLink.name
-        }, outgoingLinksElement)
-    
-    //end of outgoingLinks
-    hopLinksElement.append(outgoingLinksElement)
+            return true
+        },
+    })
 }
 
 export const outgoingLinksFromCurrentPage = (

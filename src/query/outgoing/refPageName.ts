@@ -1,6 +1,7 @@
 import { BlockEntity, PageEntity } from "@logseq/libs/dist/LSPlugin"
 import { checkAlias, excludePagesFromPageList } from "../../excludePages"
 import { createTd, pageArray, tokenLinkCreateTh } from "../type"
+import { renderBatchSection } from "../batch"
 
 //typeBlocks
 export const typeRefPageName = async (outgoingList: pageArray[], hopLinksElement: HTMLDivElement, current: PageEntity | null) => {
@@ -29,19 +30,18 @@ export const typeRefPageName = async (outgoingList: pageArray[], hopLinksElement
         // ソートする
         pageList.sort()
 
-        // th 作成
-        const tokenLinkElement: HTMLDivElement = tokenLinkCreateTh(pageLink, "th-type-backLinks", "BackLinks", { mark: "<<" })
+        await renderBatchSection({
+            rows: pageList,
+            hopLinksElement,
+            createSection: () => tokenLinkCreateTh(pageLink, "th-type-backLinks", "BackLinks", { mark: "<<" }),
+            renderRow: async (pageName, tokenLinkElement) => {
+                if (pageName === "") return false
+                const page = await logseq.Editor.getPage(pageName) as PageEntity | null
+                if (!page) return false
 
-        // td 作成
-        for (const pageName of pageList) {
-            if (pageName === "") continue
-            const page = await logseq.Editor.getPage(pageName) as PageEntity | null
-            if (!page) continue
-
-            //td
-            createTd(page, tokenLinkElement)
-        }
-
-        hopLinksElement.append(tokenLinkElement)
+                createTd(page, tokenLinkElement)
+                return true
+            },
+        })
     }
 }

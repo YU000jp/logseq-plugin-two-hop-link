@@ -10,6 +10,7 @@ import {
     removeNamespaceHierarchyGroups,
     splitPageHierarchy,
 } from "../helpers"
+import { renderBatchSection } from "../batch"
 
 
 export const typeNamespace = async (hopLinksElement: HTMLDivElement, flag?: { category: boolean, removePageHierarchy: boolean }) => {
@@ -50,7 +51,7 @@ export const typeNamespace = async (hopLinksElement: HTMLDivElement, flag?: { ca
         if (flag.removePageHierarchy === true) removeNamespaceHierarchyGroups(category, hierarchies)
 
         for (const key in category)
-            processing(
+            await processing(
                 category[key],
                 hopLinksElement,
                 key,
@@ -60,7 +61,7 @@ export const typeNamespace = async (hopLinksElement: HTMLDivElement, flag?: { ca
             )
     } else {
         // カテゴリ分けしない
-        processing(
+        await processing(
             result,
             hopLinksElement,
             namespace,
@@ -94,33 +95,34 @@ const processing = async (
 
     const pageLink: pageArray | string = await createNamespacePageLink(namespace)
 
-    //thを作成する
-    const tokenLinkElement: HTMLDivElement = tokenLinkCreateTh(
-        // keyが"multi class"の場合は、(multi class)にする
-        pageLink,
-        "th-type-namespace",
-        t("Namespace"),
-        {
-            mark: "",
-            hierarchies,
-        }
-    )
-
-    //tdを作成する
-    for (const page of result)
-        createTd({
-            name: page.name,
-            uuid: page.uuid,
-            originalName: page["original-name"],
-        }, tokenLinkElement,
+    await renderBatchSection({
+        rows: result,
+        hopLinksElement,
+        createSection: () => tokenLinkCreateTh(
+            // keyが"multi class"の場合は、(multi class)にする
+            pageLink,
+            "th-type-namespace",
+            t("Namespace"),
             {
-                removeKeyword,
-                isHierarchyTitle
+                mark: "",
+                hierarchies,
             }
-        )
+        ),
+        renderRow: (page, tokenLinkElement) => {
+            createTd({
+                name: page.name,
+                uuid: page.uuid,
+                originalName: page["original-name"],
+            }, tokenLinkElement,
+                {
+                    removeKeyword,
+                    isHierarchyTitle
+                }
+            )
 
-    //結果を表示する
-    hopLinksElement.append(tokenLinkElement)
+            return true
+        },
+    })
 
 }
 

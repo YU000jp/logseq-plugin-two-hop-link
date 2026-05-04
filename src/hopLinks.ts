@@ -127,7 +127,7 @@ const hopLinks = async (select?: string) => {
             externalLinks(pageRelativeInnerElement, hopLinksElement)
 
         // 2ホップリンクの表示 selectで選択されたタイプ
-        switchSelect(
+        await switchSelect(
             select || (logseq.settings!.hopLinkType as string),
             hopLinksElement,
             outgoingList,
@@ -296,7 +296,7 @@ const putSelectButton = (hopLinksElement: HTMLDivElement) => {
 
 
 //selectで選択されたタイプ
-const switchSelect = (
+const switchSelect = async (
     select: string,
     hopLinksElement: HTMLDivElement,
     outgoingList: pageArray[],
@@ -306,17 +306,17 @@ const switchSelect = (
 
         case "pageBlocks":
             // ブロックを表示する
-            typeBlock(hopLinksElement, { isImageOnly: false })
+            await typeBlock(hopLinksElement, { isImageOnly: false })
             break
 
         case "pageNamespaceNoPageHierarchy":
             // クエリーでページ名に関連するページを取得する カテゴリ分け
-            typeNamespace(hopLinksElement, { category: true, removePageHierarchy: true })
+            await typeNamespace(hopLinksElement, { category: true, removePageHierarchy: true })
             break
 
         case "pageNamespace":
             // クエリーでページ名に関連するページを取得する カテゴリ分け
-            typeNamespace(hopLinksElement, { category: true, removePageHierarchy: false })
+            await typeNamespace(hopLinksElement, { category: true, removePageHierarchy: false })
             break
 
         // case "pageBlocksImage":
@@ -331,27 +331,27 @@ const switchSelect = (
 
         case "outgoingPageTags":
             //ページタグ
-            typePageTags(outgoingList, hopLinksElement)
+            await typePageTags(outgoingList, hopLinksElement)
             break
 
         case "outgoingHierarchy":
             //hierarchy
-            typeHierarchy(outgoingList, hopLinksElement, false)
+            await typeHierarchy(outgoingList, hopLinksElement, false)
             break
 
         case "refBackLinks": //Linked References > BackLinks (ページ)
             //block.content
-            typeRefPageName(outgoingList, hopLinksElement, current)
+            await typeRefPageName(outgoingList, hopLinksElement, current)
             break
 
         case "refBlocks": // Linked References > Blocks
             //block.content
-            typeRefBlock(outgoingList, hopLinksElement, current, { isImageOnly: false })
+            await typeRefBlock(outgoingList, hopLinksElement, current, { isImageOnly: false })
             break
 
         case "refBlocksImage": // Linked References > Blocks > Image only
             //block.content
-            typeRefBlock(outgoingList, hopLinksElement, current, { isImageOnly: true })
+            await typeRefBlock(outgoingList, hopLinksElement, current, { isImageOnly: true })
             break
 
     }
