@@ -1,8 +1,7 @@
 import { PageEntity } from "@logseq/libs/dist/LSPlugin"
 import { t } from "logseq-l10n"
-import { excludePageFromPageEntity } from "../../excludePages"
-import { sortPageArray } from "../../lib"
 import { createTd, tokenLinkCreateTh } from "../type"
+import { preparePageEntities } from "../helpers"
 import { excludeJournalFilter } from "../../excludePages"
 
 export const typePageHierarchy = async (hopLinksElement: HTMLDivElement) => {
@@ -11,20 +10,10 @@ export const typePageHierarchy = async (hopLinksElement: HTMLDivElement) => {
     if (!currentPage) return
 
     // クエリーでは、ページ名を小文字にする必要があるが、nameはすでに小文字になっている
-    let PageEntity = await logseq.DB.q(`(namespace "${currentPage.name}")`) as PageEntity[] | null
+    const PageEntity = preparePageEntities(await logseq.DB.q(`(namespace \"${currentPage.name}\")`) as PageEntity[] | null)
 
     //PageEntityが空の場合は処理を終了する
-    if (!PageEntity || PageEntity.length === 0) return
-
-    //journalを除外する
-    PageEntity = excludeJournalFilter(PageEntity)
-
-    //設定されたページを除外する
-    if (PageEntity) excludePageFromPageEntity(PageEntity)
     if (PageEntity.length === 0) return
-
-    //sortする
-    sortPageArray(PageEntity)
 
     //thを作成する
     const tokenLinkElement: HTMLDivElement = tokenLinkCreateTh(

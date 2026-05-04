@@ -1,13 +1,14 @@
 import { t } from "logseq-l10n"
 import { PageEntity } from "@logseq/libs/dist/LSPlugin.user"
 import { createTd, pageArray } from "./type"
+import { createHopLinksSection } from "./helpers"
 
 export const outgoingLinks = (outgoingList: pageArray[], hopLinksElement: HTMLDivElement) => {
 
-    //outgoingLinksElementを作成
-    const outgoingLinksElement: HTMLDivElement = document.createElement("div")
-    outgoingLinksElement.id = "outgoingLinks"
-    outgoingLinksElement.innerHTML += `<div class="hopLinksTh" id="hopLinksKeyword">>> ${t("Outgoing Links (Keyword)")}</div>`
+    const outgoingLinksElement: HTMLDivElement = createHopLinksSection(
+        "outgoingLinks",
+        `>> ${t("Outgoing Links (Keyword)")}`
+    )
 
     // tdを作成
     for (const pageLink of outgoingList)

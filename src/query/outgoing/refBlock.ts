@@ -2,8 +2,8 @@ import { IEntityID, PageEntity } from "@logseq/libs/dist/LSPlugin"
 import { t } from "logseq-l10n"
 import { checkAlias, excludePageFromBlockEntity } from "../../excludePages"
 import { pageArray, tokenLinkCreateTh } from "../type"
+import { normalizeBlockEntities } from "../helpers"
 import { CreateTdBlock } from "../type"
-import { removeBlockUuid } from "../type"
 import { replaceForLogseq } from "../blockContent"
 
 //typeBlocks
@@ -35,6 +35,9 @@ export const typeRefBlock = async (
         excludePageFromBlockEntity(outgoingList)
         if (outgoingList.length === 0) continue
 
+        const normalizedOutgoingList = normalizeBlockEntities(outgoingList)
+        if (normalizedOutgoingList.length === 0) continue
+
         // 各ブロックはその日付情報をもっていないので、ソートできない
 
         //thの作成
@@ -46,12 +49,7 @@ export const typeRefBlock = async (
         )
         //end of 行タイトル(左ヘッダー)
 
-        // uuidが重複するものを削除する
-        removeBlockUuid(outgoingList)
-
-
-
-        for (const block of outgoingList) {
+        for (const block of normalizedOutgoingList) {
             const content = await replaceForLogseq(block.content, { isImageOnly: flag.isImageOnly }) as string
             if (!content) continue
             await CreateTdBlock(pageLink, block, tokenLinkElement)

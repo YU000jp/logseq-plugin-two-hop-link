@@ -1,7 +1,6 @@
 import { PageEntity } from "@logseq/libs/dist/LSPlugin"
-import { excludeJournalFilter, excludePageFromPageEntity } from "../../excludePages"
-import { sortPageArray } from "../../lib"
 import { createTd, pageArray, tokenLinkCreateTh } from "../type"
+import { preparePageEntities } from "../helpers"
 
 export const typeHierarchy = (outgoingList: pageArray[], hopLinksElement: HTMLDivElement, flagFull?: boolean) => {
     outgoingList.forEach(getTd())
@@ -10,19 +9,8 @@ export const typeHierarchy = (outgoingList: pageArray[], hopLinksElement: HTMLDi
         return async (pageLink) => {
             if (!pageLink) return
 
-            let PageEntity = await logseq.DB.q(`(namespace "${pageLink.name}")`) as unknown as PageEntity[] | undefined
-            if (!PageEntity || PageEntity.length === 0) return
-
-            // namespace.nameが2024/01のような形式だったら除外する。また2024のような数値も除外する
-            PageEntity = excludeJournalFilter(PageEntity)
-            if (!PageEntity || PageEntity.length === 0) return
-
-            //ページを除外する
-            excludePageFromPageEntity(PageEntity)
+            let PageEntity = preparePageEntities(await logseq.DB.q(`(namespace \"${pageLink.name}\")`) as unknown as PageEntity[] | undefined)
             if (PageEntity.length === 0) return
-
-            //sortする
-            sortPageArray(PageEntity)
 
             //th
             const tokenLinkElement: HTMLDivElement = tokenLinkCreateTh(pageLink, "th-type-hierarchy", "Hierarchy", { mark: "<<" })
@@ -44,9 +32,6 @@ export const typeHierarchy = (outgoingList: pageArray[], hopLinksElement: HTMLDi
                         name: page.name,
                         originalName: page.originalName
                     }, 0, outgoingList)
-
-            //PageEntityを空にする
-            PageEntity.length = 0
         }
     }
 }

@@ -3,6 +3,7 @@ import { t } from "logseq-l10n"
 import { openTooltipEventFromBlock, openTooltipEventFromPageName } from "../tooltip"
 import { excludeJournal } from "../excludePages"
 import { blockContent } from "./blockContent"
+import { normalizeBlockEntities } from "./helpers"
 
 export const tokenLinkCreateTh = (
     pageLink: pageArray | string,
@@ -184,10 +185,7 @@ export const CreateTdBlock = async (
 
 }
 export const removeBlockUuid = (outgoingList: { uuid: string; content: string; page: IEntityID }[]) => {
-    const uuidSet = new Set()
-    outgoingList.forEach((block) => uuidSet.add(block.uuid))
-    outgoingList.filter((block) => uuidSet.has(block.uuid)
-        && block.content !== "") // ついでに空のものも除外する
-    uuidSet.clear()
+    const normalizedList = normalizeBlockEntities(outgoingList)
+    outgoingList.splice(0, outgoingList.length, ...normalizedList)
 }
 

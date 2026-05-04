@@ -1,7 +1,6 @@
 import { PageEntity } from "@logseq/libs/dist/LSPlugin"
-import { excludeJournalFilter, excludePageFromPageEntity } from "../../excludePages"
-import { sortPageArray } from "../../lib"
 import { createTd, pageArray, tokenLinkCreateTh } from "../type"
+import { preparePageEntities } from "../helpers"
 import { t } from "logseq-l10n"
 
 export const typePageTags = async (outgoingList: pageArray[], hopLinksElement: HTMLDivElement) => {
@@ -22,31 +21,20 @@ export const typePageTags = async (outgoingList: pageArray[], hopLinksElement: H
             }
 
         //そのページにタグ漬けされている
-        let PageEntity = await logseq.DB.q(`(page-tags "${pageLink.name}")`) as PageEntity[]
-        if (PageEntity && PageEntity.length !== 0)
-            // pageTags.nameが2024/01のような形式だったら除外する。また2024のような数値も除外する
-            PageEntity = excludeJournalFilter(PageEntity)
+        const PageEntity = preparePageEntities(await logseq.DB.q(`(page-tags \"${pageLink.name}\")`) as PageEntity[] | null)
+        const PageEntityFromPropertyFiltered = preparePageEntities(PageEntityFromProperty)
 
         //PageEntityとPageEntityFromPropertyが両方とも空の場合は処理を終了する
-        if ((!PageEntity || PageEntity.length === 0)
-            && (!PageEntityFromProperty || PageEntityFromProperty.length === 0)) continue
-
-        //ページを除外する
-        if (PageEntity) excludePageFromPageEntity(PageEntity)
-        if (PageEntityFromProperty) excludePageFromPageEntity(PageEntityFromProperty)
         if (PageEntity.length === 0
-            && PageEntityFromProperty.length === 0) continue
-        //sortする
-        if (PageEntity) sortPageArray(PageEntity)
+            && PageEntityFromPropertyFiltered.length === 0) continue
 
         //th
         const tokenLinkElement: HTMLDivElement = tokenLinkCreateTh(pageLink, "th-type-pageTags", t("Page-Tags"), { mark: "<<" })
 
         //td
-        if (PageEntity)
-            for (const page of PageEntity)
-                createTd(page, tokenLinkElement, { isPageTags: true })
-        for (const page of PageEntityFromProperty)
+        for (const page of PageEntity)
+            createTd(page, tokenLinkElement, { isPageTags: true })
+        for (const page of PageEntityFromPropertyFiltered)
             createTd(page, tokenLinkElement, { isPageTags: true })
 
         hopLinksElement.append(tokenLinkElement)
