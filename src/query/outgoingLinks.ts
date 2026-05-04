@@ -35,14 +35,18 @@ export const outgoingLinks = async (
 
 export const outgoingLinksFromCurrentPage = (
     pageLinks: NodeListOf<HTMLAnchorElement>,
-    newSet: Set<unknown>
+    newSet: Set<unknown>,
+    lookupPage: (name: string) => Promise<PageEntity | null>
 ): Promise<pageArray>[] =>
-    Array.from(pageLinks).map(async (pageLink) => {
-        if (pageLink.dataset.ref === undefined) return undefined
-        // 先頭に#がついている場合は取り除く
-        const pageLinkRef: string = pageLink.dataset.ref.replace(/^#/, "")
+    Array.from(
+        new Set(
+            Array.from(pageLinks)
+                .map((pageLink) => pageLink.dataset.ref?.replace(/^#/, ""))
+                .filter((ref): ref is string => Boolean(ref))
+        )
+    ).map(async (pageLinkRef) => {
         try {
-            const thisPage = await logseq.Editor.getPage(pageLinkRef) as PageEntity | undefined
+            const thisPage = await lookupPage(pageLinkRef) as PageEntity | undefined
             if (!thisPage) return undefined
 
             if (shouldExcludeOutgoingPage(thisPage)) return undefined

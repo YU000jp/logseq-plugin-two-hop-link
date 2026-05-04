@@ -1,6 +1,6 @@
 import { PageEntity } from "@logseq/libs/dist/LSPlugin"
 import { pageArray } from "../type"
-import { renderBatchSection } from "../batch"
+import { renderBatchSection, yieldToUI } from "../batch"
 import { excludeJournal } from "../../excludePages"
 
 export type OutgoingPageLinkSectionOptions<T> = {
@@ -43,6 +43,8 @@ export const renderOutgoingPageLinkSections = async <T>({
                                        createSection: () => createSection(pageLink),
                                        renderRow: (row, sectionElement) => renderRow(row, sectionElement, pageLink),
                           })
+
+                          await yieldToUI()
              }
 }
 

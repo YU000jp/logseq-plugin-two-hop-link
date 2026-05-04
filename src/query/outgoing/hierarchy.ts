@@ -3,13 +3,18 @@ import { createTd, pageArray, tokenLinkCreateTh } from "../type"
 import { preparePageEntities } from "../helpers"
 import { renderBatchSection } from "../batch"
 
-export const typeHierarchy = async (outgoingList: pageArray[], hopLinksElement: HTMLDivElement, flagFull?: boolean) => {
-    for (const pageLink of outgoingList)
-        await getTd()(pageLink, 0, outgoingList)
+const MAX_HIERARCHY_DEPTH = 3
 
-    function getTd(): (value: pageArray | undefined, index: number, array: (pageArray | undefined)[]) => void {
+export const typeHierarchy = async (outgoingList: pageArray[], hopLinksElement: HTMLDivElement, flagFull?: boolean) => {
+    const visited = new Set<string>()
+    for (const pageLink of outgoingList)
+        await getTd(0)(pageLink, 0, outgoingList)
+
+    function getTd(depth: number): (value: pageArray | undefined, index: number, array: (pageArray | undefined)[]) => void {
         return async (pageLink) => {
             if (!pageLink) return
+            if (visited.has(pageLink.uuid)) return
+            visited.add(pageLink.uuid)
 
             let PageEntity = preparePageEntities(await logseq.DB.q(`(namespace \"${pageLink.name}\")`) as unknown as PageEntity[] | undefined)
             if (PageEntity.length === 0) return
@@ -28,9 +33,9 @@ export const typeHierarchy = async (outgoingList: pageArray[], hopLinksElement: 
                 },
             })
 
-            if (flagFull === true)
+            if (flagFull === true && depth < MAX_HIERARCHY_DEPTH)
                 for (const page of PageEntity)
-                    await getTd()({
+                    await getTd(depth + 1)({
                         uuid: page.uuid,
                         name: page.name,
                         originalName: page.originalName

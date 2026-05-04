@@ -1,5 +1,17 @@
 import { pageArray } from "./type"
 
+const BATCH_RENDER_CHUNK_SIZE = 20
+
+export const yieldToUI = async (): Promise<void> => {
+             await new Promise<void>((resolve) => {
+                          if (typeof requestAnimationFrame === "function") {
+                                       requestAnimationFrame(() => resolve())
+                                       return
+                          }
+                          setTimeout(resolve, 0)
+             })
+}
+
 export type BatchSectionRowRenderer<T> = (
              row: T,
              sectionElement: HTMLDivElement
@@ -27,10 +39,13 @@ export const renderBatchSection = async <T>({
              const sectionElement = createSection()
              let hasRenderedRow = false
 
-             for (const row of rows) {
+             for (const [index, row] of rows.entries()) {
                           const rendered = await renderRow(row, sectionElement)
                           if (rendered === false) continue
                           hasRenderedRow = true
+
+                          if ((index + 1) % BATCH_RENDER_CHUNK_SIZE === 0)
+                                       await yieldToUI()
              }
 
              if (!hasRenderedRow) return false

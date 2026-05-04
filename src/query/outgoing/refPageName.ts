@@ -17,7 +17,7 @@ export const typeRefPageName = async (outgoingList: pageArray[], hopLinksElement
             const page = await logseq.Editor.getPageLinkedReferences(pageLink.uuid) as [page: PageEntity, blocks: BlockEntity[]][] | null
             if (!page) return []
 
-            const pageList = page.map((page) => page[0]?.originalName)
+            const pageList = [...new Set(page.map((page) => page[0]?.originalName))]
             if (!pageList || pageList.length === 0) return []
 
             excludePagesFromPageList(pageList)
