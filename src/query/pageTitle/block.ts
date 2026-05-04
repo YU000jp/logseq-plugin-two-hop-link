@@ -10,8 +10,10 @@ export const typeBlock = async (
     hopLinksElement: HTMLDivElement,
     flag: {
         isImageOnly: boolean,
-    }
+    },
+    shouldContinue?: () => boolean
 ) => {
+    if (shouldContinue && !shouldContinue()) return
 
     const currentPage = await logseq.Editor.getCurrentPage() as pageArray | null
     if (!currentPage) return
@@ -69,6 +71,7 @@ export const typeBlock = async (
         rows: outgoingList,
         hopLinksElement,
         createSection: () => tokenLinkElement,
+        shouldContinue,
         renderRow: async (block, sectionElement) => {
             const content = await replaceForLogseq(block.content, flag) as string
             if (flag

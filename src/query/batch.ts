@@ -32,6 +32,7 @@ export type BatchSectionOptions<T> = {
              rows: T[] | null | undefined
              hopLinksElement: HTMLDivElement
              createSection: () => HTMLDivElement
+             shouldContinue?: () => boolean
              renderRow: BatchSectionRowRenderer<T>
 }
 
@@ -82,11 +83,15 @@ export const renderBatchSection = async <T>({
              rows,
              hopLinksElement,
              createSection,
+             shouldContinue,
              renderRow,
 }: BatchSectionOptions<T>): Promise<boolean> => {
              if (!rows || rows.length === 0) return false
+             if (shouldContinue && !shouldContinue()) return false
 
              const sectionElement = createSection()
+             if (shouldContinue && !shouldContinue()) return false
+
              const loadMoreContainer = document.createElement("div")
              loadMoreContainer.classList.add("hopLinksLoadMoreContainer")
              let hasRenderedRow = false
@@ -101,17 +106,45 @@ export const renderBatchSection = async <T>({
              }
 
              const renderNextChunk = async (): Promise<void> => {
+                          if (shouldContinue && !shouldContinue()) {
+                                       disconnectAutoLoadMoreObserver()
+                                       loadMoreContainer.remove()
+                                       if (!hasRenderedRow) sectionElement.remove()
+                                       return
+                          }
+
                           const chunkEnd = Math.min(rows.length, renderedCount + batchRenderChunkSize)
                           for (; renderedCount < chunkEnd; renderedCount++) {
+                                       if (shouldContinue && !shouldContinue()) {
+                                                    disconnectAutoLoadMoreObserver()
+                                                    loadMoreContainer.remove()
+                                                    if (!hasRenderedRow) sectionElement.remove()
+                                                    return
+                                       }
+
                                        const rendered = await renderRow(rows[renderedCount], sectionElement)
                                        if (rendered === false) continue
                                        hasRenderedRow = true
+
+                                       if (shouldContinue && !shouldContinue()) {
+                                                    disconnectAutoLoadMoreObserver()
+                                                    loadMoreContainer.remove()
+                                                    if (!hasRenderedRow) sectionElement.remove()
+                                                    return
+                                       }
 
                                        if ((renderedCount + 1) % batchRenderChunkSize === 0)
                                                     await yieldToUI()
                           }
 
                           if (renderedCount < rows.length) {
+                                       if (shouldContinue && !shouldContinue()) {
+                                                    disconnectAutoLoadMoreObserver()
+                                                    loadMoreContainer.remove()
+                                                    if (!hasRenderedRow) sectionElement.remove()
+                                                    return
+                                       }
+
                                        if (!loadMoreContainer.isConnected) sectionElement.append(loadMoreContainer)
                                        const loadMoreButton = createLoadMoreButton(renderNextChunk)
                                        loadMoreContainer.replaceChildren(loadMoreButton)
@@ -131,6 +164,13 @@ export const renderBatchSection = async <T>({
              }
 
              hopLinksElement.append(sectionElement)
+             if (shouldContinue && !shouldContinue()) {
+                          loadMoreContainer.remove()
+                          disconnectAutoLoadMoreObserver()
+                          sectionElement.remove()
+                          return false
+             }
+
              await renderNextChunk()
 
              if (!hasRenderedRow && renderedCount >= rows.length) {

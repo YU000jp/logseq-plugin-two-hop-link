@@ -9,6 +9,7 @@ export type OutgoingPageLinkSectionOptions<T> = {
              current?: PageEntity | null
              prepareOutgoingList?: (outgoingList: pageArray[]) => void
              shouldSkipPageLink?: (pageLink: pageArray) => boolean
+             shouldContinue?: () => boolean
              collectRows: (pageLink: pageArray) => Promise<T[] | null | undefined> | T[] | null | undefined
              createSection: (pageLink: pageArray) => HTMLDivElement
              renderRow: (row: T, sectionElement: HTMLDivElement, pageLink: pageArray) => Promise<boolean | void> | boolean | void
@@ -38,11 +39,13 @@ export const renderOutgoingPageLinkSections = async <T>({
              current,
              prepareOutgoingList,
              shouldSkipPageLink,
+             shouldContinue,
              collectRows,
              createSection,
              renderRow,
 }: OutgoingPageLinkSectionOptions<T>): Promise<void> => {
              if (current && prepareOutgoingList) prepareOutgoingList(outgoingList)
+             if (shouldContinue && !shouldContinue()) return
 
              const collectConcurrency = 3
              const collectedSections: Array<{ pageLink: pageArray, rows: T[] }> = []
@@ -50,6 +53,8 @@ export const renderOutgoingPageLinkSections = async <T>({
 
              const collectNext = async () => {
                           while (true) {
+                                       if (shouldContinue && !shouldContinue()) return
+
                                        const currentIndex = nextIndex++
                                        if (currentIndex >= outgoingList.length) return
 
@@ -58,6 +63,7 @@ export const renderOutgoingPageLinkSections = async <T>({
                                        if (shouldSkipPageLink && shouldSkipPageLink(pageLink)) continue
 
                                        const rows = await collectRows(pageLink)
+                                       if (shouldContinue && !shouldContinue()) return
                                        if (!rows || rows.length === 0) continue
 
                                        collectedSections[currentIndex] = { pageLink, rows }
@@ -65,16 +71,20 @@ export const renderOutgoingPageLinkSections = async <T>({
              }
 
              await Promise.all(Array.from({ length: Math.min(collectConcurrency, outgoingList.length) }, () => collectNext()))
+             if (shouldContinue && !shouldContinue()) return
 
              for (const section of collectedSections) {
                           if (!section) continue
+                          if (shouldContinue && !shouldContinue()) return
                           await renderBatchSection({
                                        rows: section.rows,
                                        hopLinksElement,
                                        createSection: () => createSection(section.pageLink),
+                                       shouldContinue,
                                        renderRow: (row, sectionElement) => renderRow(row, sectionElement, section.pageLink),
                           })
 
+                          if (shouldContinue && !shouldContinue()) return
                           await yieldToUI()
              }
 }

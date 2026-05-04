@@ -5,12 +5,13 @@ import { t } from "logseq-l10n"
 import { renderOutgoingPageLinkSections } from "./shared"
 import { createPageLookupCache } from "./shared"
 
-export const typePageTags = async (outgoingList: pageArray[], hopLinksElement: HTMLDivElement) => {
+export const typePageTags = async (outgoingList: pageArray[], hopLinksElement: HTMLDivElement, shouldContinue?: () => boolean) => {
     const getPageByName = createPageLookupCache()
 
     await renderOutgoingPageLinkSections({
         outgoingList,
         hopLinksElement,
+        shouldContinue,
         collectRows: async (pageLink) => {
             const page = await logseq.Editor.getPage(pageLink.uuid) as PageEntity | null
             if (!page) return []

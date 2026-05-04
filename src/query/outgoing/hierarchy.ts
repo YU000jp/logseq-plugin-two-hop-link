@@ -5,7 +5,14 @@ import { renderBatchSection } from "../batch"
 
 const MAX_HIERARCHY_DEPTH = 3
 
-export const typeHierarchy = async (outgoingList: pageArray[], hopLinksElement: HTMLDivElement, flagFull?: boolean) => {
+export const typeHierarchy = async (
+    outgoingList: pageArray[],
+    hopLinksElement: HTMLDivElement,
+    flagFull?: boolean,
+    shouldContinue?: () => boolean
+) => {
+    if (shouldContinue && !shouldContinue()) return
+
     const visited = new Set<string>()
     const namespaceQueryCache = new Map<string, Promise<PageEntity[]>>()
 
@@ -21,22 +28,27 @@ export const typeHierarchy = async (outgoingList: pageArray[], hopLinksElement: 
         return request
     }
 
-    for (const pageLink of outgoingList)
+    for (const pageLink of outgoingList) {
+        if (shouldContinue && !shouldContinue()) return
         await getTd(0)(pageLink, 0, outgoingList)
+    }
 
     function getTd(depth: number): (value: pageArray | undefined, index: number, array: (pageArray | undefined)[]) => void {
         return async (pageLink) => {
             if (!pageLink) return
+            if (shouldContinue && !shouldContinue()) return
             if (visited.has(pageLink.uuid)) return
             visited.add(pageLink.uuid)
 
             let PageEntity = await getNamespacePages(pageLink.name)
+            if (shouldContinue && !shouldContinue()) return
             if (PageEntity.length === 0) return
 
             await renderBatchSection({
                 rows: PageEntity,
                 hopLinksElement,
                 createSection: () => tokenLinkCreateTh(pageLink, "th-type-hierarchy", "Hierarchy", { mark: "<<" }),
+                shouldContinue,
                 renderRow: (page, tokenLinkElement) => {
                     createTd(page, tokenLinkElement,
                         {
@@ -48,12 +60,14 @@ export const typeHierarchy = async (outgoingList: pageArray[], hopLinksElement: 
             })
 
             if (flagFull === true && depth < MAX_HIERARCHY_DEPTH)
-                for (const page of PageEntity)
+                for (const page of PageEntity) {
+                    if (shouldContinue && !shouldContinue()) return
                     await getTd(depth + 1)({
                         uuid: page.uuid,
                         name: page.name,
                         originalName: page.originalName
                     }, 0, outgoingList)
+                }
         }
     }
 }

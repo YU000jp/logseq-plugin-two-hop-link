@@ -8,8 +8,11 @@ import { shouldExcludeOutgoingPage, toPageArray } from "./outgoing/shared"
 export const outgoingLinks = async (
     outgoingList: pageArray[],
     hopLinksElement: HTMLDivElement,
-    current: PageEntity | null
+    current: PageEntity | null,
+    shouldContinue?: () => boolean
 ) => {
+    if (shouldContinue && !shouldContinue()) return
+
     const visibleOutgoingList = current
         ? outgoingList.filter((pageLink) => pageLink.uuid !== current.uuid)
         : outgoingList
@@ -21,6 +24,7 @@ export const outgoingLinks = async (
             "outgoingLinks",
             `>> ${t("Outgoing Links (Keyword)")}`
         ),
+        shouldContinue,
         renderRow: (pageLink, outgoingLinksElement) => {
             createTd({
                 uuid: pageLink.uuid,

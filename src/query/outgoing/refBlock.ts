@@ -14,7 +14,8 @@ export const typeRefBlock = async (
     current: PageEntity | null,
     flag: {
         isImageOnly: boolean,
-    }
+    },
+    shouldContinue?: () => boolean
 ) => {
 
     await renderOutgoingPageLinkSections({
@@ -22,6 +23,7 @@ export const typeRefBlock = async (
         hopLinksElement,
         current,
         prepareOutgoingList: current ? (list) => checkAlias(current, list) : undefined,
+        shouldContinue,
         shouldSkipPageLink: (pageLink) => logseq.settings!.excludeCurrentPage === true
             && current !== null
             && (pageLink.uuid === current.uuid || pageLink.name === current.originalName),

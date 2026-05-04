@@ -13,6 +13,7 @@ import { externalLinks } from "./query/externalLinks"
 import { pageArray } from "./query/type"
 import { typeBlock } from "./query/pageTitle/block"
 import { createPageLookupCache, shouldExcludeOutgoingPage, toPageArray } from "./query/outgoing/shared"
+import { endHopLinksRenderSession, isHopLinksRenderSessionActive, startHopLinksRenderSession } from "./renderSession"
 
 
 export const loadTwoHopLink = async () => {
@@ -35,15 +36,12 @@ export const loadTwoHopLink = async () => {
 
 }//end of loadTwoHopLink
 
-
-
-let processing: boolean = false
 const hopLinks = async (select?: string) => {
-    if (processing) return
-    processing = true
+    const sessionId = startHopLinksRenderSession()
     const lookupPage = createPageLookupCache()
 
     try {
+        if (!isHopLinksRenderSessionActive(sessionId)) return
 
         //アウトゴーイングリンクを表示する場所
         const pageRelativeInnerElement = parent.document.body.querySelector("div#root>div>main div#main-content-container div.page.relative>div.relative") as HTMLDivElement | null
@@ -51,6 +49,10 @@ const hopLinks = async (select?: string) => {
         const hopLinksElement: HTMLDivElement = document.createElement("div")
         hopLinksElement.id = "hopLinks"
         pageRelativeInnerElement.append(hopLinksElement)
+        if (!isHopLinksRenderSessionActive(sessionId)) {
+            hopLinksElement.remove()
+            return
+        }
         //PageBlocksInnerElementの中に含まれる<a data-ref>をすべて取得する
         const pageLinks = pageRelativeInnerElement.querySelectorAll(
             "a[data-ref]:not(.page-property-key)" + (logseq.settings!.keywordsIncludeHierarchy === false ? ":not([data-checked])" : "")
@@ -64,13 +66,17 @@ const hopLinks = async (select?: string) => {
         //outgoingリンクを取得する
         const pageLinksSet: Promise<pageArray>[] = outgoingLinksFromCurrentPage(pageLinks, newSet, lookupPage)
         //ページ名を追加する
-        const current = await addCurrentPageHierarchy(newSet, pageLinksSet, lookupPage)
+        const current = await addCurrentPageHierarchy(newSet, pageLinksSet, lookupPage, () => isHopLinksRenderSessionActive(sessionId))
         //newSetを空にする
         newSet.clear()
 
         // 結果の配列からundefinedを除外
         const outgoingList = (await Promise.all(pageLinksSet)).filter(Boolean)
         pageLinksSet.length = 0 //配列を空にする
+        if (!isHopLinksRenderSessionActive(sessionId)) {
+            hopLinksElement.remove()
+            return
+        }
 
         //hopLinksElementに<span>でタイトルメッセージを設置する
         const spanElement: HTMLSpanElement = document.createElement("span")
@@ -106,6 +112,10 @@ const hopLinks = async (select?: string) => {
 
         //outgoingListが空の場合は処理を終了する
         if (outgoingList.length === 0) {
+            if (!isHopLinksRenderSessionActive(sessionId)) {
+                hopLinksElement.remove()
+                return
+            }
 
             // ブランクメッセージを表示する
             const pElement: HTMLElement = document.createElement("p")
@@ -123,7 +133,7 @@ const hopLinks = async (select?: string) => {
 
             // 発信リンクを表示
             if (logseq.settings!.outgoingLinks === true)
-                outgoingLinks(outgoingList, hopLinksElement, current)
+                await outgoingLinks(outgoingList, hopLinksElement, current, () => isHopLinksRenderSessionActive(sessionId))
 
             // 外部リンクを表示
             if (logseq.settings!.externalLinks === true)
@@ -134,7 +144,8 @@ const hopLinks = async (select?: string) => {
                 select || (logseq.settings!.hopLinkType as string),
                 hopLinksElement,
                 outgoingList,
-                current)
+                current,
+                () => isHopLinksRenderSessionActive(sessionId))
 
         }//end of if (outgoingList)
 
@@ -142,7 +153,7 @@ const hopLinks = async (select?: string) => {
         putSelectButton(hopLinksElement)
 
     } finally {
-        processing = false
+        endHopLinksRenderSession(sessionId)
     }
 
 }//end of hopLinks
@@ -167,13 +178,17 @@ const sortOutgoingList = (outgoingList: pageArray[]) =>
 const addCurrentPageHierarchy = async (
     newSet: Set<unknown>,
     outgoingList: Promise<pageArray>[],
-    lookupPage: (name: string) => Promise<PageEntity | null>) => {
+    lookupPage: (name: string) => Promise<PageEntity | null>,
+    shouldContinue?: () => boolean) => {
 
     const current = await logseq.Editor.getCurrentPage() as PageEntity | null
     if (current) {
+        if (shouldContinue && !shouldContinue()) return current
 
         const addPage = async (name: string) => {
+            if (shouldContinue && !shouldContinue()) return
             const page = await lookupPage(name)
+            if (shouldContinue && !shouldContinue()) return
             if (page) {
                 if (shouldExcludeOutgoingPage(page)) return
 
@@ -192,7 +207,10 @@ const addCurrentPageHierarchy = async (
             // current.originalNameがA/B/Cとしたら、A、A/B、A/B/Cを取得する
             let names = current.originalName.split("/")
             names = names.map((_name, i) => names.slice(0, i + 1).join("/"))
-            for (const name of names) await addPage(name)
+            for (const name of names) {
+                if (shouldContinue && !shouldContinue()) return current
+                await addPage(name)
+            }
 
         } else
             // current.originalName 現在のページ名
@@ -293,23 +311,26 @@ const switchSelect = async (
     select: string,
     hopLinksElement: HTMLDivElement,
     outgoingList: pageArray[],
-    current: PageEntity | null
+    current: PageEntity | null,
+    shouldContinue?: () => boolean
 ) => {
+    if (shouldContinue && !shouldContinue()) return
+
     switch (select) {
 
         case "pageBlocks":
             // ブロックを表示する
-            await typeBlock(hopLinksElement, { isImageOnly: false })
+            await typeBlock(hopLinksElement, { isImageOnly: false }, shouldContinue)
             break
 
         case "pageNamespaceNoPageHierarchy":
             // クエリーでページ名に関連するページを取得する カテゴリ分け
-            await typeNamespace(hopLinksElement, { category: true, removePageHierarchy: true })
+            await typeNamespace(hopLinksElement, { category: true, removePageHierarchy: true }, shouldContinue)
             break
 
         case "pageNamespace":
             // クエリーでページ名に関連するページを取得する カテゴリ分け
-            await typeNamespace(hopLinksElement, { category: true, removePageHierarchy: false })
+            await typeNamespace(hopLinksElement, { category: true, removePageHierarchy: false }, shouldContinue)
             break
 
         // case "pageBlocksImage":
@@ -324,27 +345,27 @@ const switchSelect = async (
 
         case "outgoingPageTags":
             //ページタグ
-            await typePageTags(outgoingList, hopLinksElement)
+            await typePageTags(outgoingList, hopLinksElement, shouldContinue)
             break
 
         case "outgoingHierarchy":
             //hierarchy
-            await typeHierarchy(outgoingList, hopLinksElement, false)
+            await typeHierarchy(outgoingList, hopLinksElement, false, shouldContinue)
             break
 
         case "refBackLinks": //Linked References > BackLinks (ページ)
             //block.content
-            await typeRefPageName(outgoingList, hopLinksElement, current)
+            await typeRefPageName(outgoingList, hopLinksElement, current, shouldContinue)
             break
 
         case "refBlocks": // Linked References > Blocks
             //block.content
-            await typeRefBlock(outgoingList, hopLinksElement, current, { isImageOnly: false })
+            await typeRefBlock(outgoingList, hopLinksElement, current, { isImageOnly: false }, shouldContinue)
             break
 
         case "refBlocksImage": // Linked References > Blocks > Image only
             //block.content
-            await typeRefBlock(outgoingList, hopLinksElement, current, { isImageOnly: true })
+            await typeRefBlock(outgoingList, hopLinksElement, current, { isImageOnly: true }, shouldContinue)
             break
 
     }

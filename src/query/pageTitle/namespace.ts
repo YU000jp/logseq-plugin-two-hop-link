@@ -13,7 +13,12 @@ import {
 import { renderBatchSection } from "../batch"
 
 
-export const typeNamespace = async (hopLinksElement: HTMLDivElement, flag?: { category: boolean, removePageHierarchy: boolean }) => {
+export const typeNamespace = async (
+    hopLinksElement: HTMLDivElement,
+    flag?: { category: boolean, removePageHierarchy: boolean },
+    shouldContinue?: () => boolean
+) => {
+    if (shouldContinue && !shouldContinue()) return
 
     const currentPage = await logseq.Editor.getCurrentPage() as pageArray | null
     if (!currentPage) return
@@ -57,7 +62,8 @@ export const typeNamespace = async (hopLinksElement: HTMLDivElement, flag?: { ca
                 key,
                 key,
                 true,
-                hierarchies
+                hierarchies,
+                shouldContinue
             )
     } else {
         // カテゴリ分けしない
@@ -67,6 +73,9 @@ export const typeNamespace = async (hopLinksElement: HTMLDivElement, flag?: { ca
             namespace,
             currentPage.originalName,
             false
+            ,
+            undefined,
+            shouldContinue
         )
     }
 }
@@ -79,7 +88,8 @@ const processing = async (
     namespace: string,
     removeKeyword: string,
     isHierarchyTitle: boolean,
-    hierarchies?: string
+    hierarchies?: string,
+    shouldContinue?: () => boolean
 ) => {
 
     if (!result || result.length === 0) return
@@ -108,6 +118,7 @@ const processing = async (
                 hierarchies,
             }
         ),
+        shouldContinue,
         renderRow: (page, tokenLinkElement) => {
             createTd({
                 name: page.name,

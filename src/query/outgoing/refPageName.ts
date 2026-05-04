@@ -4,7 +4,12 @@ import { createTd, pageArray, tokenLinkCreateTh } from "../type"
 import { createPageLookupCache, renderOutgoingPageLinkSections } from "./shared"
 
 //typeBlocks
-export const typeRefPageName = async (outgoingList: pageArray[], hopLinksElement: HTMLDivElement, current: PageEntity | null) => {
+export const typeRefPageName = async (
+    outgoingList: pageArray[],
+    hopLinksElement: HTMLDivElement,
+    current: PageEntity | null,
+    shouldContinue?: () => boolean
+) => {
     const getPageByName = createPageLookupCache()
 
     await renderOutgoingPageLinkSections({
@@ -12,6 +17,7 @@ export const typeRefPageName = async (outgoingList: pageArray[], hopLinksElement
         hopLinksElement,
         current,
         prepareOutgoingList: current ? (list) => checkAlias(current, list) : undefined,
+        shouldContinue,
         shouldSkipPageLink: (pageLink) => logseq.settings!.excludeCurrentPage === true
             && current !== null
             && (pageLink.uuid === current.uuid || pageLink.name === current.originalName),
