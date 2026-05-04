@@ -121,7 +121,7 @@ const hopLinks = async (select?: string) => {
 
         // 発信リンクを表示
         if (logseq.settings!.outgoingLinks === true)
-            outgoingLinks(outgoingList, hopLinksElement)
+            outgoingLinks(outgoingList, hopLinksElement, current)
 
         // 外部リンクを表示
         if (logseq.settings!.externalLinks === true)

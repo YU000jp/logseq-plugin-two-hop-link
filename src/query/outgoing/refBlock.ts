@@ -24,7 +24,7 @@ export const typeRefBlock = async (
         prepareOutgoingList: current ? (list) => checkAlias(current, list) : undefined,
         shouldSkipPageLink: (pageLink) => logseq.settings!.excludeCurrentPage === true
             && current !== null
-            && pageLink.name === current.originalName,
+            && (pageLink.uuid === current.uuid || pageLink.name === current.originalName),
         collectRows: async (pageLink) => {
             const page = await logseq.Editor.getPageLinkedReferences(pageLink.uuid) as [page: PageEntity, blocks: { uuid: string, content: string, page: IEntityID, }[]][]
             if (!page) return []

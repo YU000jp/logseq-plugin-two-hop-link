@@ -5,9 +5,17 @@ import { createHopLinksSection } from "./helpers"
 import { renderBatchSection } from "./batch"
 import { shouldExcludeOutgoingPage, toPageArray } from "./outgoing/shared"
 
-export const outgoingLinks = async (outgoingList: pageArray[], hopLinksElement: HTMLDivElement) => {
+export const outgoingLinks = async (
+    outgoingList: pageArray[],
+    hopLinksElement: HTMLDivElement,
+    current: PageEntity | null
+) => {
+    const visibleOutgoingList = current && logseq.settings!.excludeCurrentPage === true
+        ? outgoingList.filter((pageLink) => pageLink.uuid !== current.uuid)
+        : outgoingList
+
     await renderBatchSection({
-        rows: outgoingList,
+        rows: visibleOutgoingList,
         hopLinksElement,
         createSection: () => createHopLinksSection(
             "outgoingLinks",

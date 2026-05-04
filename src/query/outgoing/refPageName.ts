@@ -12,7 +12,7 @@ export const typeRefPageName = async (outgoingList: pageArray[], hopLinksElement
         prepareOutgoingList: current ? (list) => checkAlias(current, list) : undefined,
         shouldSkipPageLink: (pageLink) => logseq.settings!.excludeCurrentPage === true
             && current !== null
-            && pageLink.name === current.originalName,
+            && (pageLink.uuid === current.uuid || pageLink.name === current.originalName),
         collectRows: async (pageLink) => {
             const page = await logseq.Editor.getPageLinkedReferences(pageLink.uuid) as [page: PageEntity, blocks: BlockEntity[]][] | null
             if (!page) return []
