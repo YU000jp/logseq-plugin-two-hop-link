@@ -16,27 +16,54 @@ import { createPageLookupCache, shouldExcludeOutgoingPage, toPageArray } from ".
 import { endHopLinksRenderSession, isHopLinksRenderSessionActive, startHopLinksRenderSession } from "./renderSession"
 
 
+let hopLinksHandlersRegistered = false
+let hopLinksRenderInProgress = false
+let hopLinksScheduleTimer: ReturnType<typeof setTimeout> | null = null
+
+
+const scheduleHopLinks = (select?: string) => {
+    if (hopLinksScheduleTimer) clearTimeout(hopLinksScheduleTimer)
+    hopLinksScheduleTimer = setTimeout(() => {
+        hopLinksScheduleTimer = null
+        void hopLinks(select)
+    }, 80)
+}
+
+
 export const loadTwoHopLink = async () => {
+
+    if (hopLinksHandlersRegistered) return
+    hopLinksHandlersRegistered = true
 
     //ページ読み込み時に実行コールバック
 
     logseq.App.onRouteChanged(async ({ template }) => {
         if (template === '/page/:name'
-            && !parent.document.getElementById("hopLinks") as boolean)
-            hopLinks()
+            && !parent.document.getElementById("hopLinks"))
+            scheduleHopLinks()
     })
 
     //Logseqのバグあり。動作保証が必要
     logseq.App.onPageHeadActionsSlotted(async () => {
-        if (!parent.document.getElementById("hopLinks") as boolean)
-            hopLinks()
+        if (!parent.document.getElementById("hopLinks"))
+            scheduleHopLinks()
     })
 
     logseq.provideStyle(CSSfile)
 
+    logseq.beforeunload(async () => {
+        if (hopLinksScheduleTimer) {
+            clearTimeout(hopLinksScheduleTimer)
+            hopLinksScheduleTimer = null
+        }
+        hopLinksHandlersRegistered = false
+    })
+
 }//end of loadTwoHopLink
 
 const hopLinks = async (select?: string) => {
+    if (hopLinksRenderInProgress) return
+    hopLinksRenderInProgress = true
     const sessionId = startHopLinksRenderSession()
     const lookupPage = createPageLookupCache()
 
@@ -154,6 +181,7 @@ const hopLinks = async (select?: string) => {
 
     } finally {
         endHopLinksRenderSession(sessionId)
+        hopLinksRenderInProgress = false
     }
 
 }//end of hopLinks
@@ -289,7 +317,7 @@ const putSelectButton = (hopLinksElement: HTMLDivElement) => {
     selectElement.addEventListener("change", () => {
         //hopLinksElementを削除する
         hopLinksElement.remove()
-        hopLinks(selectElement.value)
+        scheduleHopLinks(selectElement.value)
         logseq.updateSettings({ hopLinkType: selectElement.value })
     })
     hopLinksElement.append(selectElement)
