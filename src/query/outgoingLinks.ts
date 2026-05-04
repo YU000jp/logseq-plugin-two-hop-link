@@ -10,7 +10,7 @@ export const outgoingLinks = async (
     hopLinksElement: HTMLDivElement,
     current: PageEntity | null
 ) => {
-    const visibleOutgoingList = current && logseq.settings!.excludeCurrentPage === true
+    const visibleOutgoingList = current
         ? outgoingList.filter((pageLink) => pageLink.uuid !== current.uuid)
         : outgoingList
 
