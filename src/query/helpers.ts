@@ -29,6 +29,53 @@ export const createNamespacePageLink = async (namespace: string): Promise<pageAr
              return page ? page : namespace
 }
 
+export const getNamespaceCategoryKey = (page: pageArray): string =>
+             page["original-name"].includes("/")
+                          ? page["original-name"].split("/").slice(0, -1).join("/")
+                          : "multi class"
+
+export const createNamespaceCategoryMap = (result: pageArray[]): { [key: string]: pageArray[] } => {
+             const category: { [key: string]: pageArray[] } = {}
+
+             for (const page of result) {
+                          const key = getNamespaceCategoryKey(page)
+                          if (!category[key]) category[key] = []
+                          category[key].push(page)
+             }
+
+             return category
+}
+
+export const moveSingleItemCategoriesToMultiClass = (category: { [key: string]: pageArray[] }) => {
+             for (const key in category) {
+                          if (category[key] && category[key].length === 1) {
+                                       if (!category["multi class"]) category["multi class"] = []
+                                       category["multi class"].push(...category[key])
+                                       delete category[key]
+                          }
+             }
+}
+
+export const reclassifyMultiClassCategory = (category: { [key: string]: pageArray[] }) => {
+             if (!category["multi class"] || category["multi class"].length <= 10) return
+
+             for (const key in category) {
+                          if (key === "multi class") continue
+                          for (const page of category["multi class"]) {
+                                       if (page["original-name"].startsWith(key)) {
+                                                    if (!category[key]) category[key] = []
+                                                    category[key].push(page)
+                                                    category["multi class"] = category["multi class"].filter((item) => item.uuid !== page.uuid)
+                                       }
+                          }
+             }
+}
+
+export const removeNamespaceHierarchyGroups = (category: { [key: string]: pageArray[] }, hierarchies: string) => {
+             for (const key in category)
+                          if (key.startsWith(hierarchies + "/") || key === hierarchies) delete category[key]
+}
+
 export const preparePageEntities = (pages: PageEntity[] | null | undefined): PageEntity[] => {
              if (!pages || pages.length === 0) return []
 
