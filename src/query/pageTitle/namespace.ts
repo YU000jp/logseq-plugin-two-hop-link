@@ -2,6 +2,7 @@ import { t } from "logseq-l10n"
 import { excludePages } from "../../excludePages"
 import { sortPageArray } from "../../lib"
 import { createTd, pageArray, tokenLinkCreateTh } from "../type"
+import { createNamespacePageLink, splitPageHierarchy } from "../helpers"
 
 
 export const typeNamespace = async (hopLinksElement: HTMLDivElement, flag?: { category: boolean, removePageHierarchy: boolean }) => {
@@ -9,14 +10,7 @@ export const typeNamespace = async (hopLinksElement: HTMLDivElement, flag?: { ca
     const currentPage = await logseq.Editor.getCurrentPage() as pageArray | null
     if (!currentPage) return
 
-    // 「/」を含む場合のみ、AAA/BBB/CCCのような形式の場合はCCCを取得する
-    const namespace: string = currentPage.originalName.includes("/") ?
-        (currentPage.originalName.split("/").pop()) as string
-        : currentPage.originalName
-    // CCC以前の部分を取得する
-    const hierarchies = currentPage.originalName.includes("/") ?
-        (currentPage.originalName.split("/").slice(0, -1).join("/")) as string
-        : currentPage.originalName
+    const { namespace, hierarchies } = splitPageHierarchy(currentPage.originalName)
 
     let result = (await logseq.DB.datascriptQuery(
         //同じ名前をもつページ名を取得するクエリー
@@ -86,13 +80,7 @@ const processing = async (
     //sortする
     result = sortPageArray(result)
 
-    let pageLink: pageArray | string
-    if (namespace === "multi class") {
-        pageLink = t("multi class")
-    } else {
-        const page = await logseq.Editor.getPage(namespace) as pageArray | null
-        pageLink = page ? page : namespace
-    }
+    const pageLink: pageArray | string = await createNamespacePageLink(namespace)
 
     //thを作成する
     const tokenLinkElement: HTMLDivElement = tokenLinkCreateTh(
