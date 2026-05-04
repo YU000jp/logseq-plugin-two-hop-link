@@ -12,6 +12,7 @@ import { outgoingLinks, outgoingLinksFromCurrentPage } from "./query/outgoingLin
 import { externalLinks } from "./query/externalLinks"
 import { pageArray } from "./query/type"
 import { typeBlock } from "./query/pageTitle/block"
+import { shouldExcludeOutgoingPage, toPageArray } from "./query/outgoing/shared"
 
 
 export const loadTwoHopLink = async () => {
@@ -169,27 +170,14 @@ const addCurrentPageHierarchy = async (
         const addPage = async (name: string) => {
             const page = await logseq.Editor.getPage(name) as PageEntity | null
             if (page) {
-                //日誌を除外する
-                if (logseq.settings!.excludeJournalFromOutgoingLinks === true
-                    && page["journal?"] === true) return
-
-                if (logseq.settings!.excludeDateFromOutgoingLinks === true) {
-                    //2024/01のような形式のページを除外する
-                    if (page.originalName.match(/^\d{4}\/\d{2}$/) !== null) return
-                    //2024のような数値を除外する
-                    if (page.originalName.match(/^\d{4}$/) !== null) return
-                }
+                if (shouldExcludeOutgoingPage(page)) return
 
                 // 重複を除外する
                 if (newSet.has(page.uuid)) return
 
                 newSet.add(page.uuid)
 
-                outgoingList.push(Promise.resolve({
-                    uuid: page.uuid,
-                    name: page.name,
-                    originalName: page.originalName
-                }))
+                outgoingList.push(Promise.resolve(toPageArray(page)))
             }
         }
 

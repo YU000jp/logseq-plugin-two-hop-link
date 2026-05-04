@@ -4,6 +4,10 @@ import { openTooltipEventFromBlock, openTooltipEventFromPageName } from "../tool
 import { excludeJournal } from "../excludePages"
 import { blockContent } from "./blockContent"
 import { normalizeBlockEntities } from "./helpers"
+import { createTooltipRowShell } from "./ui"
+import { formatTokenLinkText, resolvePageDisplayData } from "./displayName"
+import { appendPageTooltipRow } from "./pageRow"
+import { appendBlockTooltipRow } from "./blockRow"
 
 export const tokenLinkCreateTh = (
     pageLink: pageArray | string,
@@ -24,44 +28,19 @@ export const tokenLinkCreateTh = (
 
     if (typeof pageLink !== "string") {
 
-        // 「hls」を「PDF」にする
-        // 「/」が含まれる場合は、それのすべて「 / 」に置換する
-        divElement.innerText = (pageLink.originalName === "hls" ? "PDF" :
-            pageLink.originalName.includes("/") ?
-                // 特定の階層を取り除く
-                (flag && flag.hierarchies ?
-                    pageLink.originalName.replace(flag.hierarchies + "/", "../")
-                    : pageLink.originalName
-                ).replaceAll(/\//g, " / ")
-                : pageLink.originalName) + " " + flag.mark
-        //ポップアップ表示あり
-        const labelElement: HTMLLabelElement = document.createElement("label")
-        //input要素を作成
-        const inputElement: HTMLInputElement = document.createElement("input")
-        inputElement.type = "checkbox"
+        divElement.innerText = pageLink.originalName === "hls"
+            ? "PDF"
+            : formatTokenLinkText(pageLink.originalName, flag)
+        const { labelElement, inputElement, popupElement } = createTooltipRowShell()
         inputElement.dataset.uuid = pageLink.uuid
         inputElement.dataset.name = pageLink.name
-        //div ポップアップの内容
-        const popupElement: HTMLDivElement = document.createElement("div")
-        popupElement.classList.add("hopLinks-popup-content")
-        popupElement.title = ""
         inputElement.addEventListener("change", openTooltipEventFromPageName(popupElement))
         labelElement.append(divElement, inputElement, popupElement)
         tokenLinkElement.append(labelElement)
 
     } else {
 
-        // ページと同じ階層であれば、それを解除する
-        const keyWord = (flag && flag.hierarchies ?
-            pageLink.replace(flag.hierarchies + "/", "../")
-            : pageLink) + " " + flag.mark
-
-        // 「hls」を「PDF」にする
-        // 「/」を「 / 」にする
-        divElement.innerText = keyWord === "hls" ? "PDF" :
-            keyWord.includes("/") ?
-                keyWord.replaceAll("/", " / ")
-                : keyWord
+        divElement.innerText = formatTokenLinkText(pageLink, flag)
         tokenLinkElement.append(divElement)
 
     }
@@ -89,54 +68,8 @@ export const createTd = async (
             && page.originalName === flag.removeKeyword)
     ) return
 
-    let displayName = (flag && flag.removeKeyword // isHierarchyTitleがある場合は、キーワードを取り除く
-        && flag.isHierarchyTitle === true)
-        ? // ページ名とキーワードが完全一致する場合は除く
-        page.originalName.replace(flag.removeKeyword, "..") //hierarchyの場合は、一致するキーワードを取り除く
-        : page.originalName
-
-    //e525a109-3542-46cf-b316-54cef873db74のような値だったらUUIDなので、ブロックを取得する
-    if (page.name.match(/^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/)) {
-        const block = await logseq.Editor.getBlock(page.uuid) as { page: PageEntity } | null
-        if (block && block.page) {
-            displayName = block.page.originalName
-            page.uuid = block.page.uuid
-            page.name = block.page.name
-        } else
-            return
-    } else
-        // 「hls/」から始まる場合は、hls/の代わりに、「File > 」にする
-        if (page.name.startsWith("hls/")) displayName = displayName.replace("hls/", `PDF ${t("File")} > `)
-        else
-            // 「hls__」から始まる場合は、hls__の代わりに、「File > 」にする
-            if (page.name.startsWith("hls__")) displayName = displayName.replace("hls__", `PDF ${t("File")} > `)
-            else
-                // 「/」が含まれる場合は、それのすべて「 / 」に置換する
-                if (page.originalName.includes("/")) displayName = displayName.replaceAll(/\//g, " / ")
-
-
-    const divElementTag: HTMLDivElement = document.createElement("div")
-    divElementTag.classList.add("hopLinksTd")
-    //ポップアップ表示あり
-    const labelElement: HTMLLabelElement = document.createElement("label")
-    //input要素を作成
-    const inputElement: HTMLInputElement = document.createElement("input")
-    inputElement.type = "checkbox"
-    inputElement.dataset.uuid = page.uuid
-    inputElement.dataset.name = page.originalName
-    //div ポップアップの内容
-    const popupElement: HTMLDivElement = document.createElement("div")
-    popupElement.classList.add("hopLinks-popup-content")
-    popupElement.title = ""
-    const anchorElement: HTMLAnchorElement = document.createElement("a")
-    anchorElement.dataset.uuid = page.uuid
-    anchorElement.innerText = (flag && flag.isPageTags ? "#" : "") + displayName //isPageTagsがtrueの場合は、#を付ける
-    divElementTag.title = page.originalName
-    divElementTag.append(anchorElement)
-    inputElement.addEventListener("change", openTooltipEventFromPageName(popupElement))
-
-    labelElement.append(divElementTag, inputElement, popupElement)
-    tokenLinkElement.append(labelElement)
+    const { page: displayPage, displayName } = await resolvePageDisplayData(page, flag)
+    appendPageTooltipRow(displayPage, displayName, tokenLinkElement, flag)
 }
 
 
@@ -158,30 +91,9 @@ export const CreateTdBlock = async (
         || block.content === `#${pageLink.originalName}`) //  #ページ名に一致する場合は除外する
         return
 
-    //行タイトル(左ヘッダー)
-    const blockElement: HTMLDivElement = document.createElement("div")
-    blockElement.classList.add("hopLinksTd")
-    //ポップアップ表示あり
-    const labelElement: HTMLLabelElement = document.createElement("label")
-    //input要素を作成
-    const inputElement: HTMLInputElement = document.createElement("input")
-    inputElement.type = "checkbox"
-    inputElement.name = "blocks-popup-" + pageLink.uuid
-    //div ポップアップの内容
-    const popupElement: HTMLDivElement = document.createElement("div")
-    popupElement.classList.add("hopLinks-popup-content")
-
-    const anchorElement: HTMLAnchorElement = document.createElement("a")
-    anchorElement.dataset.uuid = block.uuid
-
     const content = await blockContent(block.content) as string
     if (content === "") return
-    anchorElement.innerHTML = content
-
-    blockElement.append(anchorElement)
-    blockElement.addEventListener("click", openTooltipEventFromBlock(popupElement))
-    labelElement.append(blockElement, inputElement, popupElement)
-    tokenLinkElement.append(labelElement)
+    appendBlockTooltipRow(pageLink, content, tokenLinkElement, block)
 
 }
 export const removeBlockUuid = (outgoingList: { uuid: string; content: string; page: IEntityID }[]) => {

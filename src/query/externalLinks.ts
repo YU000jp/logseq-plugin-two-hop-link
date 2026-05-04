@@ -1,6 +1,7 @@
 import { t } from "logseq-l10n"
 import { createHopLinksSection } from "./helpers"
 import { openTooltipEventFromPageName } from "../tooltip"
+import { createTooltipRowShell } from "./ui"
 
 export const externalLinks = (PageBlocksInnerElement: HTMLDivElement, hopLinksElement: HTMLDivElement) => {
     const externalLinks = PageBlocksInnerElement.querySelectorAll("a.external-link") as NodeListOf<HTMLAnchorElement> | null
@@ -12,12 +13,7 @@ export const externalLinks = (PageBlocksInnerElement: HTMLDivElement, hopLinksEl
     )
 
     for (const externalLink of externalLinks) {
-        const labelElement: HTMLLabelElement = document.createElement("label")
-        const inputElement: HTMLInputElement = document.createElement("input")
-        inputElement.type = "checkbox"
-        const popupElement: HTMLDivElement = document.createElement("div")
-        popupElement.classList.add("hopLinks-popup-content")
-        popupElement.title = ""
+        const { labelElement, inputElement, popupElement } = createTooltipRowShell()
 
         const anchorElement: HTMLAnchorElement = externalLink.cloneNode(true) as HTMLAnchorElement
         inputElement.addEventListener("change", openTooltipEventFromPageName(popupElement))

@@ -1,47 +1,39 @@
 import { BlockEntity, PageEntity } from "@logseq/libs/dist/LSPlugin"
 import { checkAlias, excludePagesFromPageList } from "../../excludePages"
 import { createTd, pageArray, tokenLinkCreateTh } from "../type"
-import { renderBatchSection } from "../batch"
+import { renderOutgoingPageLinkSections } from "./shared"
 
 //typeBlocks
 export const typeRefPageName = async (outgoingList: pageArray[], hopLinksElement: HTMLDivElement, current: PageEntity | null) => {
+    await renderOutgoingPageLinkSections({
+        outgoingList,
+        hopLinksElement,
+        current,
+        prepareOutgoingList: current ? (list) => checkAlias(current, list) : undefined,
+        shouldSkipPageLink: (pageLink) => logseq.settings!.excludeCurrentPage === true
+            && current !== null
+            && pageLink.name === current.originalName,
+        collectRows: async (pageLink) => {
+            const page = await logseq.Editor.getPageLinkedReferences(pageLink.uuid) as [page: PageEntity, blocks: BlockEntity[]][] | null
+            if (!page) return []
 
-    //aliasプロパティを取得し、outgoingListから除外する
-    if (current) checkAlias(current, outgoingList)
+            const pageList = page.map((page) => page[0]?.originalName)
+            if (!pageList || pageList.length === 0) return []
 
-    for (const pageLink of outgoingList) {
-        if (!pageLink) continue
-        //現在のページ名に一致する場合は除外する
-        if (logseq.settings!.excludeCurrentPage === true
-            && current
-            && pageLink.name === current.originalName) continue
-        //pageLinkRefのページを取得する
-        const page = await logseq.Editor.getPageLinkedReferences(pageLink.uuid) as [page: PageEntity, blocks: BlockEntity[]][] | null
-        if (!page) continue
-        //ページ名を取得し、リストにする
-        const pageList = page.map((page) => page[0]?.originalName)
-        if (!pageList
-            || pageList.length === 0) continue
+            excludePagesFromPageList(pageList)
+            if (pageList.length === 0) return []
 
-        //excludePagesの配列に含まれるページを除外する
-        excludePagesFromPageList(pageList)
-        if (pageList.length === 0) continue
+            pageList.sort()
+            return pageList
+        },
+        createSection: (pageLink) => tokenLinkCreateTh(pageLink, "th-type-backLinks", "BackLinks", { mark: "<<" }),
+        renderRow: async (pageName, tokenLinkElement) => {
+            if (pageName === "") return false
+            const page = await logseq.Editor.getPage(pageName) as PageEntity | null
+            if (!page) return false
 
-        // ソートする
-        pageList.sort()
-
-        await renderBatchSection({
-            rows: pageList,
-            hopLinksElement,
-            createSection: () => tokenLinkCreateTh(pageLink, "th-type-backLinks", "BackLinks", { mark: "<<" }),
-            renderRow: async (pageName, tokenLinkElement) => {
-                if (pageName === "") return false
-                const page = await logseq.Editor.getPage(pageName) as PageEntity | null
-                if (!page) return false
-
-                createTd(page, tokenLinkElement)
-                return true
-            },
-        })
-    }
+            createTd(page, tokenLinkElement)
+            return true
+        },
+    })
 }
