@@ -1,10 +1,15 @@
 import { replaceInlineMarkup } from "./blockInlineTransforms"
+import { replaceCodeBlocks, replaceStatusMarkers } from "./blockTextTransforms"
 
 export const applyLightMarkdownTransforms = (content: string): string =>
-             replaceInlineMarkup(
-                          replaceTaskMarkers(
-                                       replaceHeadingMarkers(
-                                                    replaceLogbookSection(content)
+             replaceStatusMarkers(
+                          replaceCodeBlocks(
+                                       replaceInlineMarkup(
+                                                    replaceTaskMarkers(
+                                                                 replaceHeadingMarkers(
+                                                                              replaceLogbookSection(content)
+                                                                 )
+                                                    )
                                        )
                           )
              )
