@@ -34,8 +34,8 @@ export function openTooltipEventFromBlock(popupElement: HTMLDivElement): (this: 
             //pElementをクリックしたら、親ブロックを開く
             const anchorElement: HTMLAnchorElement = document.createElement("a")
             anchorElement.dataset.uuid = parentPage.uuid
-            anchorElement.innerText = t("Parent Block")
-            anchorElement.title = t("Click to open page in right sidebar")
+            anchorElement.innerText = t("Parent block")
+            anchorElement.title = t("Open in the right sidebar")
             anchorElement.addEventListener("click", function () { logseq.Editor.openInRightSidebar(parentBlock.uuid) })
             pElement.append(anchorElement)
             const preElement: HTMLPreElement = document.createElement("pre")
@@ -53,7 +53,7 @@ export function openTooltipEventFromBlock(popupElement: HTMLDivElement): (this: 
         const anchorElement: HTMLAnchorElement = document.createElement("a")
         anchorElement.dataset.uuid = parentPage.uuid
         anchorElement.innerText = t("Target block")
-        anchorElement.title = t("Click to open page in right sidebar")
+        anchorElement.title = t("Open in the right sidebar")
         anchorElement.addEventListener("click", function () { logseq.Editor.openInRightSidebar(thisBlock.uuid) })
         pElement.append(anchorElement)
         const preElement: HTMLPreElement = document.createElement("pre")
@@ -94,7 +94,7 @@ export function openTooltipEventFromPageName(popupElement: HTMLDivElement): (thi
 
         //ページの内容を取得する
         const preElement: HTMLPreElement = document.createElement("pre")
-        preElement.title = t("Page Content")
+        preElement.title = t("Page content")
         preElement.classList.add("ls-block")
         let content = await blockContent(await getPageContent(thisPage)) as string
         if (content) {
@@ -117,7 +117,7 @@ export function openTooltipEventFromPageName(popupElement: HTMLDivElement): (thi
  */
 const showPageTags = (property: string[], popupElement: HTMLDivElement, flagAlias?: boolean) => {
     const tagsElement: HTMLParagraphElement = document.createElement("p")
-    tagsElement.title = flagAlias ? "Alias" : t("Page-Tags")
+    tagsElement.title = flagAlias ? t("Aliases") : t("Page tags")
     property.forEach((tag, i) => {
         if (i !== 0) tagsElement.append(", ")
         const anchorElement: HTMLAnchorElement = document.createElement("a")
@@ -146,7 +146,7 @@ const showUpdatedAt = (updatedAt: number, popupElement: HTMLDivElement) => {
     //ローカライズされた日付
     if (updatedAt === undefined) return
     //2023年1月1日 12時43分のように表示する
-    updatedAtElement.innerText = t("This page updated at: ") + new Date(updatedAt).toLocaleString("default", {
+    updatedAtElement.innerText = t("Last updated: ") + new Date(updatedAt).toLocaleString("default", {
         month: "long", day: "numeric", year: "numeric", hour: "numeric", minute: "numeric"
     })
     popupElement.append(updatedAtElement)

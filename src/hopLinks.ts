@@ -74,7 +74,7 @@ const hopLinks = async (select?: string) => {
     const spanElement: HTMLSpanElement = document.createElement("span")
     spanElement.id = "hopLinksTitle"
     spanElement.innerText = t("2 Hop Links")
-    spanElement.title = t("Click to collapse")
+    spanElement.title = t("Collapse the 2 Hop Links section")
     spanElement.style.cursor = "zoom-out"
     //spanElementをクリックしたら消す
     spanElement.addEventListener("click", () => {
@@ -93,7 +93,7 @@ const hopLinks = async (select?: string) => {
             const updateButtonElement = parent.document.getElementById("hopLinksUpdate") as HTMLButtonElement | null
             if (updateButtonElement) {
                 updateButtonElement.innerText = t("Collapsed (revert)")
-                updateButtonElement.title = t("Click to revert")
+                updateButtonElement.title = t("Restore the collapsed section")
             }
         }
     }, { once: true })
@@ -107,7 +107,7 @@ const hopLinks = async (select?: string) => {
 
         // ブランクメッセージを表示する
         const pElement: HTMLElement = document.createElement("p")
-        pElement.innerText = t("No links found in this page. (If add links, please click the update button.)")
+        pElement.innerText = t("No links were found on this page yet. Add links, then click Update.")
         hopLinksElement.append(pElement)
         return
 
@@ -205,14 +205,14 @@ const buttonSettingsUpdate = (hopLinksElement: HTMLDivElement, spanElement: HTML
     const settingButtonElement: HTMLButtonElement = document.createElement("button")
     settingButtonElement.id = "hopLinksSetting"
     settingButtonElement.innerText = "⚙"
-    settingButtonElement.title = t("Click to open plugin settings")
+    settingButtonElement.title = t("Open 2 Hop Link settings")
     settingButtonElement.addEventListener("click", () => logseq.showSettingsUI())
 
     //hopLinksElementに更新ボタンを設置する
     const updateButtonElement: HTMLButtonElement = document.createElement("button")
     updateButtonElement.id = "hopLinksUpdate"
     updateButtonElement.innerText = "🔂" + t("Update") //手動更新
-    updateButtonElement.title = t("Click to update (If add links, please click this button.)")
+    updateButtonElement.title = t("Refresh the 2 Hop Links view after editing links.")
     updateButtonElement.addEventListener("click", () => {
         //hopLinksElementを削除する
         hopLinksElement.remove()
