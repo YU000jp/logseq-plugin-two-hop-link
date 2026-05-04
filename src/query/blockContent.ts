@@ -5,10 +5,11 @@ import {
     stripBlockProperties,
 } from "./blockTransforms"
 import {
-    normalizeImageAssetUrl,
     normalizeTemporaryImageMarkers,
     restoreTemporaryImageMarkers,
     stripImageSizeHints,
+    resolveImageTag,
+    replaceMatchedImages,
 } from "./blockImageTransforms"
 
 
@@ -73,17 +74,7 @@ export const replaceImage = async (content: string): Promise<{ content: string, 
     // 「![何らかの文字列もしくは空](何らかの文字列)」のような文字列で、それぞれを取得する
     let match = content.match(/!\[(.+?)?\]\((.+?)\)/g) as RegExpMatchArray | null
     if (match) {
-        for (const m of match) {
-            // 2つ目の文字列を取得する
-            let url = m.match(/!\[(.+?)?\]\((.+?)\)/)?.[2] as string | null
-            if (!url
-                || url.includes(".pdf")) // 「.pdf」を含まないようにする
-                continue
-            const imgExists = await logseq.Assets.makeUrl(normalizeImageAssetUrl(url)) as string | null
-            if (imgExists)
-                // < img src = "" > タグにする
-                content = content.replaceAll(m, `<img src="${imgExists}" />`)
-        }
+        content = await replaceMatchedImages(content, match)
 
         // 「{:height 数値, :width 数値}」のような文字列を削除する
         if (content.includes(":height"))
