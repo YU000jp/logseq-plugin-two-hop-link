@@ -1,3 +1,10 @@
+## [1.21.3](https://github.com/YU000jp/logseq-plugin-two-hop-link/compare/v1.21.2...v1.21.3) (2026-07-20)
+
+
+### Bug Fixes
+
+* detect Logseq OG (1.x) as MD model in checkLogseqVersion ([8eadf88](https://github.com/YU000jp/logseq-plugin-two-hop-link/commit/8eadf882f60a177a296dfdb0e2e38a889fc16ccd))
+
 ## [1.21.2](https://github.com/YU000jp/logseq-plugin-two-hop-link/compare/v1.21.1...v1.21.2) (2026-05-04)
 
 
