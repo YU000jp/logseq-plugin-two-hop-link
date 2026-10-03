@@ -3,7 +3,6 @@ import { loadTwoHopLink } from './hopLinks'
 import { setup as l10nSetup } from "logseq-l10n" //https://github.com/sethyuan/logseq-l10n
 import ja from "./translations/ja.json"
 import { settings } from './settings'
-import { AppInfo } from '@logseq/libs/dist/LSPlugin.user'
 
 let logseqVersion: string = "" //バージョンチェック用
 let logseqVersionMd: boolean = false //バージョンチェック用
@@ -21,8 +20,8 @@ const main = async () => {
   await new Promise(resolve => setTimeout(resolve, 100))
 
   if (logseqVersionMd === false) {
-    // Logseq ver 0.10.*以下にしか対応していない
-    logseq.UI.showMsg("The ’2 Hop Link’ plugin only supports Logseq ver 0.10.* and below.", "warning", { timeout: 5000 })
+    // 旧UI世代(0.10.* / Logseq OG 1.x)にしか対応していない。DB系アプリ(0.11+/2.x)は新UIでDOM構造が異なるため非対応
+    logseq.UI.showMsg("The ’2 Hop Link’ plugin only supports Logseq 0.10.* and Logseq OG (1.x).", "warning", { timeout: 5000 })
     return
   }
 
@@ -39,11 +38,17 @@ const main = async () => {
 
 }/* end_main */
 
-// MDモデルかどうかのチェック DBモデルはfalse
+// アプリ世代チェック(旧UI世代=ファイルグラフ系のみ対応)
 const checkLogseqVersion = async (): Promise<boolean> => {
-  const logseqInfo = (await logseq.App.getInfo("version")) as AppInfo | any
+  let versionString = ""
+  try {
+    const logseqInfo = (await logseq.App.getInfo("version")) as unknown
+    if (typeof logseqInfo === "string") versionString = logseqInfo
+  } catch {
+    return false
+  }
   //  0.11.0もしくは0.11.0-alpha+nightly.20250427のような形式なので、先頭の3つの数値(1桁、2桁、2桁)を正規表現で取得する
-  const version = logseqInfo.match(/(\d+)\.(\d+)\.(\d+)/)
+  const version = versionString.match(/(\d+)\.(\d+)\.(\d+)/)
   if (version) {
     logseqVersion = version[0] //バージョンを取得
     // console.log("logseq version: ", logseqVersion)
