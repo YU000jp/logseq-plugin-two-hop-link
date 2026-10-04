@@ -1,3 +1,10 @@
+## [1.21.4](https://github.com/YU000jp/logseq-plugin-two-hop-link/compare/v1.21.3...v1.21.4) (2026-10-04)
+
+
+### Bug Fixes
+
+* バージョン検出を堅牢化し警告文を実際の対応範囲に修正 ([35e7ca7](https://github.com/YU000jp/logseq-plugin-two-hop-link/commit/35e7ca7e4e22c2366448d612091c89e5c0c33d44))
+
 ## [1.21.3](https://github.com/YU000jp/logseq-plugin-two-hop-link/compare/v1.21.2...v1.21.3) (2026-07-20)
 
 
